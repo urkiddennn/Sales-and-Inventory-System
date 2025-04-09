@@ -1,0 +1,210 @@
+# request.http
+# Save this file in your project root and use with REST Client extension
+
+### Base URL
+@baseUrl = http://localhost:3000/api
+@adminToken = {{loginAdmin.response.body.token}}
+@userToken = {{loginUser.response.body.token}}
+
+### Register Admin
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123",
+  "name": "Admin User",
+  "role": "admin"
+}
+
+### Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "user123",
+  "name": "Regular User"
+}
+
+### Login Admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+X-Request-Name: loginAdmin
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### Login User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+X-Request-Name: loginUser
+
+{
+  "email": "user@example.com",
+  "password": "user123"
+}
+
+### Create Product (Admin Only)
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+Test Product
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+A test product description
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="price"
+
+100
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="stock"
+
+50
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="category"
+
+Electronics
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="isOnSale"
+
+true
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="salePrice"
+
+80
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Get All Products
+GET {{baseUrl}}/products
+Authorization: Bearer {{userToken}}
+
+### Get Sale Products
+GET {{baseUrl}}/products/sale
+Authorization: Bearer {{userToken}}
+
+### Update Product Sale Status (Admin Only)
+PATCH {{baseUrl}}/products/{{createProduct.response.body._id}}/sale
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isOnSale": false
+}
+
+### Update Product (Admin Only)
+PUT {{baseUrl}}/products/{{createProduct.response.body._id}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Product",
+  "price": 120
+}
+
+### Delete Product (Admin Only)
+DELETE {{baseUrl}}/products/{{createProduct.response.body._id}}
+Authorization: Bearer {{adminToken}}
+
+### Create Sale
+POST {{baseUrl}}/sales
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "productId": "{{createProduct.response.body._id}}",
+      "quantity": 2
+    }
+  ]
+}
+
+### Get All Sales (Admin Only)
+GET {{baseUrl}}/sales
+Authorization: Bearer {{adminToken}}
+
+### Send Chat Message
+POST {{baseUrl}}/chats
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "recipientId": "{{loginUser.response.body.user.id}}",
+  "content": "Hello, how can I assist you today?"
+}
+
+### Get Chats
+GET {{baseUrl}}/chats
+Authorization: Bearer {{userToken}}
+
+### Add Comment to Product
+POST {{baseUrl}}/comments
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{createProduct.response.body._id}}",
+  "content": "Great product!"
+}
+
+### Get Product Comments
+GET {{baseUrl}}/comments/{{createProduct.response.body._id}}
+Authorization: Bearer {{userToken}}
+
+### Create Order
+POST {{baseUrl}}/orders
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "productId": "{{createProduct.response.body._id}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Get Orders (User sees own, Admin sees all)
+GET {{baseUrl}}/orders
+Authorization: Bearer {{userToken}}
+
+### Update Order Status (Admin Only)
+PATCH {{baseUrl}}/orders/{{createOrder.response.body._id}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "processing"
+}
+
+### Add to Cart
+POST {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{createProduct.response.body._id}}",
+  "quantity": 3
+}
+
+### Get Cart
+GET {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+
+### Remove from Cart
+DELETE {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{createProduct.response.body._id}}"
+}

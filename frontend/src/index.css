@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+
+.hero {
+    background-image: url("https://png.pngtree.com/background/20231030/original/pngtree-kitchen-essentials-3d-rendered-set-of-home-appliances-picture-image_5795684.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+button {
+    
+}

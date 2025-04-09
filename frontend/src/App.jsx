@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import ProductGrid from './components/ProductGrid';
 import FeaturedSection from './components/FeaturedSection';
 import Reviews from './components/Reviews';
 import Footer from './components/Footer';
 import ShoppingCart from './components/ShoppingCart';
+import CartPage from './components/cart/CartPage'; // New component
 import { getCart } from './api';
 import Hero from './components/hero/Hero';
-import Gap from './components/Gap';
+import Gap from "./components/Gap"
 
 const App = () => {
     const [cart, setCart] = useState({ items: [] });
@@ -35,26 +37,43 @@ const App = () => {
         setCart(updatedCart);
     };
 
+    const toggleCart = () => {
+        setIsCartOpen(!isCartOpen);
+    };
+
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow h-screen">
-                <Hero />
-                <Gap />
-                <ProductGrid onAddToCart={handleAddToCart} />
-                <FeaturedSection />
-                <Reviews />
+        <Router>
+            <div className="min-h-screen flex flex-col">
+                <Header onCartClick={toggleCart} />
+                <main className="flex-grow">
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <>
+                                    <Hero />
+                                    <Gap />
+                                    <ProductGrid onAddToCart={handleAddToCart} />
+                                    <FeaturedSection />
+                                    <Reviews />
+                                </>
+                            }
+                        />
+                        <Route
+                            path="/cart"
+                            element={<CartPage cart={cart} onUpdateCart={handleUpdateCart} />}
+                        />
+                    </Routes>
+                </main>
                 <Footer />
-            </main>
-
-            <ShoppingCart
-                cart={cart}
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onUpdateCart={handleUpdateCart}
-            />
-
-        </div>
+                <ShoppingCart
+                    cart={cart}
+                    isOpen={isCartOpen}
+                    onClose={() => setIsCartOpen(false)}
+                    onUpdateCart={handleUpdateCart}
+                />
+            </div>
+        </Router>
     );
 };
 

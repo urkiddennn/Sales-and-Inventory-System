@@ -1,38 +1,73 @@
-import React from 'react';
-import { IoMdSearch } from "react-icons/io";
-import { MdFavoriteBorder } from "react-icons/md";
-import { TiShoppingCart } from "react-icons/ti";
-const Header = () => {
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { IoMdSearch } from 'react-icons/io';
+import { MdFavoriteBorder } from 'react-icons/md';
+import { TiShoppingCart } from 'react-icons/ti';
+import { FaBars, FaTimes } from 'react-icons/fa';
+
+const Header = ({ onCartClick }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
 
     return (
-        <header className=" text-white flex justify-between items-center flex-col">
-            <div className='w-full h-10 bg-green-700'>s</div>
-            <div className='w-full h-3/4 flex justify-between items-center px-10 py-5 bg-white text-gray-800'>
+        <header className="text-white flex flex-col">
+            <div className="w-full h-10 bg-green-700 flex items-center justify-center">
+                <span className="text-sm">Solar Products Trading</span>
+            </div>
+            <div className="w-full bg-white text-gray-800 px-4 sm:px-6 lg:px-10 py-4 flex justify-between items-center">
                 <div className="text-xl font-bold">Sales Inventory</div>
-                <nav className="space-x-4">
-                    <a href="#" className="hover:underline">Home</a>
-                    <a href="#" className="hover:underline">Products</a>
-                    <a href="#" className="hover:underline">Cart</a>
-                    <a href="#" className="hover:underline">About</a>
-                    <a href="#" className="hover:underline">Contact</a>
 
+                <nav
+                    className={`${isMenuOpen ? 'flex' : 'hidden'
+                        } lg:flex flex-col lg:flex-row absolute lg:static top-24 left-0 w-full lg:w-auto bg-white lg:bg-transparent text-gray-800 lg:space-x-4 space-y-4 lg:space-y-0 p-4 lg:p-0 z-50`}
+                >
+                    <Link to="/" className="hover:underline">
+                        Home
+                    </Link>
+                    <Link to="/products" className="hover:underline">
+                        Products
+                    </Link>
+                    <Link to="/cart" className="hover:underline">
+                        Cart
+                    </Link>
+                    <Link to="/about" className="hover:underline">
+                        About
+                    </Link>
+                    <Link to="/contact" className="hover:underline">
+                        Contact
+                    </Link>
                 </nav>
-                <div className="space-x-2 flex justify-center items-center">
+                <div className="hidden lg:flex space-x-2 items-center">
                     <button>
-                        <IoMdSearch size={"1.5em"} />
+                        <IoMdSearch size="1.5em" className="text-gray-800" />
                     </button>
                     <button>
-
-                        <MdFavoriteBorder size={"1.5em"} />
+                        <MdFavoriteBorder size="1.5em" className="text-gray-800" />
                     </button>
-                    <button>
-
-                        <TiShoppingCart size={"1.5em"} />
+                    <button onClick={onCartClick}>
+                        <TiShoppingCart size="1.5em" className="text-gray-800" />
                     </button>
-
-                    <button className="bg-green-700 text-white ml-3 px-3 py-1 rounded">Login</button>
-                    <button className="bg-yellow-500 text-black  px-3 py-1 rounded">Sign Up</button>
+                    <button className="bg-green-700 text-white ml-3 px-3 py-1 rounded">
+                        Login
+                    </button>
+                    <button className="bg-yellow-500 text-black px-3 py-1 rounded">
+                        Sign Up
+                    </button>
                 </div>
+                <div className="flex lg:hidden space-x-2 items-center">
+                    <button>
+                        <IoMdSearch size="1.5em" className="text-gray-800" />
+                    </button>
+                    <button onClick={onCartClick}>
+                        <TiShoppingCart size="1.5em" className="text-gray-800" />
+                    </button>
+                </div>
+                <button className="lg:hidden text-gray-800" onClick={toggleMenu}>
+                    {isMenuOpen ? <FaTimes size="1.5em" /> : <FaBars size="1.5em" />}
+                </button>
             </div>
         </header>
     );

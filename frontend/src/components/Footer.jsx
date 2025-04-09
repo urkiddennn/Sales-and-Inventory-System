@@ -1,38 +1,99 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
     return (
-        <footer className="bg-gray-800 text-white p-6">
-            <div className="flex flex-col md:flex-row justify-between">
-                <div className="mb-4 md:mb-0">
-                    <h3 className="text-lg font-bold">Email Us</h3>
-                    <p>support@salesinventory.com</p>
+        <footer className="bg-white border-t py-6">
+            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {/* Logo/Brand */}
+                <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">Solar Products Trading</h3>
+                    <img
+                        src="https://via.placeholder.com/150"
+                        alt="Footer Placeholder"
+                        className="w-32 h-32 object-cover"
+                    />
                 </div>
-                <div className="flex space-x-4">
-                    <div>
-                        <h3 className="text-lg font-bold">Shop</h3>
-                        <ul>
-                            <li><a href="#" className="hover:underline">Products</a></li>
-                            <li><a href="#" className="hover:underline">Categories</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold">Account</h3>
-                        <ul>
-                            <li><a href="#" className="hover:underline">Profile</a></li>
-                            <li><a href="#" className="hover:underline">Orders</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold">Support</h3>
-                        <ul>
-                            <li><a href="#" className="hover:underline">FAQ</a></li>
-                            <li><a href="#" className="hover:underline">Contact</a></li>
-                        </ul>
-                    </div>
+
+                {/* Shop Links */}
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Shop</h3>
+                    <ul className="space-y-2">
+                        <li>
+                            <Link to="/products" className="text-gray-600 hover:underline">
+                                Home
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/categories" className="text-gray-600 hover:underline">
+                                Categories
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/about" className="text-gray-600 hover:underline">
+                                About Us
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+
+                {/* Need Help Links */}
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Need Help</h3>
+                    <ul className="space-y-2">
+                        <li>
+                            <Link to="/contact" className="text-gray-600 hover:underline">
+                                Contact
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/faq" className="text-gray-600 hover:underline">
+                                FAQs
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/return-policy" className="text-gray-600 hover:underline">
+                                Return Policy
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/privacy-policy" className="text-gray-600 hover:underline">
+                                Privacy Policy
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+
+                {/* Need Help Links (Duplicate for Wireframe) */}
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Need Help</h3>
+                    <ul className="space-y-2">
+                        <li>
+                            <Link to="/contact" className="text-gray-600 hover:underline">
+                                Contact
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/faq" className="text-gray-600 hover:underline">
+                                FAQs
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/return-policy" className="text-gray-600 hover:underline">
+                                Return Policy
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/privacy-policy" className="text-gray-600 hover:underline">
+                                Privacy Policy
+                            </Link>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <p className="text-center mt-4">&copy; 2025 Sales Inventory. All rights reserved.</p>
+            <div className="bg-yellow-400 text-center py-4 mt-6">
+                <p className="text-gray-800">© 2023 Solar Products Trading</p>
+            </div>
         </footer>
     );
 };

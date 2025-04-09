@@ -23,7 +23,7 @@ app.use('/orders/*', authMiddleware);
 app.use('/cart/*', authMiddleware);
 
 // Product routes
-app.post('/products', adminMiddleware, productController.createProduct);
+app.post('/products', productController.createProduct);
 app.get('/products', productController.getProducts);
 app.get('/products/sale', productController.getSaleProducts);
 app.patch('/products/:id/sale', adminMiddleware, productController.updateSaleStatus);

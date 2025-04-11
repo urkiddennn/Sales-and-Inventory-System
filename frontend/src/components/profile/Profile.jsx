@@ -173,7 +173,7 @@ const Profile = () => {
 
                     {/* Actions */}
                     {!editMode && !passwordMode && (
-                        <div className="flex space-x-4">
+                        <div className="flex gap-3 flex-col md:flex-row">
                             <button
                                 onClick={() => setEditMode(true)}
                                 className="px-6 py-2 bg-green-600 text-white  hover:bg-green-700 transition-colors"

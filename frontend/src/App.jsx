@@ -18,6 +18,7 @@ import YellowGap from "./components/YellowGap";
 import BestDeals from "./components/BestDeals";
 import Admin from "./Admin/Admin";
 import { CartProvider } from "./components/cart/CartContext";
+import Profile from "./components/profile/Profile";
 
 // Protected route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -137,6 +138,7 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
+
             <Route
                 path="/products"
                 element={
@@ -209,6 +211,9 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
+            <Route path="/profile" element={<NonAdminLayout>
+                <Profile />
+            </NonAdminLayout>} />
             <Route
                 path="*"
                 element={

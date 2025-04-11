@@ -4,6 +4,8 @@ import { IoMdSearch } from 'react-icons/io';
 import { MdFavoriteBorder } from 'react-icons/md';
 import { TiShoppingCart } from 'react-icons/ti';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { BsChatDots } from 'react-icons/bs'; // Icon for Chats
+import { FaUser } from 'react-icons/fa'; // Icon for Profile
 import { useAuth } from '../components/auth/AuthContext';
 
 const Header = ({ onCartClick }) => {
@@ -27,8 +29,7 @@ const Header = ({ onCartClick }) => {
                 <div className="text-xl font-bold">Sales Inventory</div>
 
                 <nav
-                    className={`${isMenuOpen ? 'flex' : 'hidden'
-                        } lg:flex flex-col lg:flex-row absolute lg:static top-24 left-0 w-full lg:w-auto bg-white lg:bg-transparent text-gray-800 lg:space-x-4 space-y-4 lg:space-y-0 p-4 lg:p-0 z-50`}
+                    className={`${isMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row absolute lg:static top-24 left-0 w-full lg:w-auto bg-white lg:bg-transparent text-gray-800 lg:space-x-4 space-y-4 lg:space-y-0 p-4 lg:p-0 z-50`}
                 >
                     <Link to="/" className="hover:underline">
                         Home
@@ -45,24 +46,29 @@ const Header = ({ onCartClick }) => {
                     <Link to="/contact" className="hover:underline">
                         Contact
                     </Link>
+
                 </nav>
-                <div className="hidden lg:flex space-x-2 items-center">
+
+                <div className="hidden lg:flex space-x-4 items-center">
                     <button>
-                        <IoMdSearch size="1.5em" className="text-gray-800" />
+                        <IoMdSearch size="1.7em" className="text-gray-800" />
                     </button>
-                    <button>
-                        <MdFavoriteBorder size="1.5em" className="text-gray-800" />
-                    </button>
+
                     <button onClick={onCartClick}>
-                        <TiShoppingCart size="1.5em" className="text-gray-800" />
+                        <TiShoppingCart size="1.7em" className="text-gray-800" />
                     </button>
+                    {isAuthenticated && (
+                        <>
+                            <Link to="/chats">
+                                <BsChatDots size="1.5em" className="text-gray-800" />
+                            </Link>
+                            <Link to="/profile">
+                                <FaUser size="1.5em" className="text-gray-800" />
+                            </Link>
+                        </>
+                    )}
                     {isAuthenticated ? (
-                        <button
-                            onClick={handleLogout}
-                            className="bg-red-600 text-white ml-3 px-3 py-1 rounded hover:bg-red-500"
-                        >
-                            Logout
-                        </button>
+                        <></>
                     ) : (
                         <>
                             <Link
@@ -80,6 +86,7 @@ const Header = ({ onCartClick }) => {
                         </>
                     )}
                 </div>
+
                 <div className="flex lg:hidden space-x-2 items-center">
                     <button>
                         <IoMdSearch size="1.5em" className="text-gray-800" />
@@ -87,19 +94,25 @@ const Header = ({ onCartClick }) => {
                     <button onClick={onCartClick}>
                         <TiShoppingCart size="1.5em" className="text-gray-800" />
                     </button>
+                    {isAuthenticated && (
+                        <>
+                            <Link to="/chats">
+                                <BsChatDots size="1.5em" className="text-gray-800" />
+                            </Link>
+                            <Link to="/profile">
+                                <FaUser size="1.5em" className="text-gray-800" />
+                            </Link>
+                        </>
+                    )}
                     {isAuthenticated ? (
-                        <button
-                            onClick={handleLogout}
-                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-500"
-                        >
-                            Logout
-                        </button>
+                        <></>
                     ) : (
                         <Link to="/login" className="bg-green-700 text-white px-3 py-1 rounded hover:bg-green-600">
                             Login
                         </Link>
                     )}
                 </div>
+
                 <button className="lg:hidden text-gray-800" onClick={toggleMenu}>
                     {isMenuOpen ? <FaTimes size="1.5em" /> : <FaBars size="1.5em" />}
                 </button>

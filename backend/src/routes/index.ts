@@ -9,6 +9,7 @@ import * as commentController from '../controllers/commentController';
 import * as orderController from '../controllers/orderController';
 import * as cartController from '../controllers/cartController';
 import * as detailsController from "../controllers/detailsController"
+import * as userController from "../controllers/userController"
 const app = new Hono();
 
 app.use(
@@ -29,6 +30,7 @@ app.use('/chats/*', authMiddleware);
 app.use('/comments/*', authMiddleware);
 app.use('/orders/*', authMiddleware);
 app.use('/cart/*', authMiddleware);
+app.use('/users/*', authMiddleware)
 
 
 // Public routes (accessible to everyone)
@@ -66,6 +68,11 @@ app.get('/cart', cartController.getCart);
 app.post('/cart', cartController.addToCart);
 app.delete('/cart', cartController.removeFromCart);
 app.put('/cart', cartController.updateCart)
+
+//users routes
+app.get('/users', userController.getUser); // Matches Profile component
+app.put('/users/:id', userController.editUser);
+app.delete('/users/:id', userController.deleteUser);
 
 // Details route
 app.post('/details', detailsController.createDetails)

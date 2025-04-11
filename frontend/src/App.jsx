@@ -54,6 +54,7 @@ const AppContent = () => {
         fetchCart();
     }, [isAuthenticated]);
 
+
     const handleAddToCart = (updatedCart) => {
         setCart(updatedCart);
         setIsCartOpen(true);

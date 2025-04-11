@@ -54,6 +54,11 @@ const CartPage = ({ cart, onUpdateCart }) => {
         }, 0);
     };
 
+
+    const handlleDebug = () => {
+        console.log("hhhh")
+    }
+
     const shippingCost = 5.99; // Placeholder shipping cost
     const total = calculateSubtotal() + shippingCost;
 

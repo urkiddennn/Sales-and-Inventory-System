@@ -1,35 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { removeFromCart, addToCart } from '../../api';
+import { useCart } from './CartContext';
 
-const CartPage = ({ cart, onUpdateCart }) => {
+const CartPage = () => {
     const navigate = useNavigate();
+    const { cart, updateCart, fetchCart } = useCart();
     const [promoCode, setPromoCode] = useState('');
+
+    // Fetch cart data when the component mounts
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetchCart(token);
+        } else {
+            navigate('/login'); // Optionally redirect to login if no token
+        }
+    }, [fetchCart, navigate]);
 
     const handleQuantityChange = async (productId, quantity) => {
         try {
-            const token = localStorage.getItem('token');
-            if (quantity <= 0) {
-                const updatedCart = await removeFromCart(token, productId);
-                onUpdateCart(updatedCart);
-            } else {
-                const updatedCart = await addToCart(token, { productId, quantity });
-                onUpdateCart(updatedCart);
-            }
+            await updateCart(productId, quantity);
         } catch (error) {
             console.error('Error updating cart:', error);
+            alert(`Failed to update cart: ${error.message}`);
         }
     };
 
     const handleClearCart = async () => {
         try {
-            const token = localStorage.getItem('token');
             for (const item of cart.items) {
-                await removeFromCart(token, item.product._id);
+                await updateCart(item.product._id, 0);
             }
-            onUpdateCart({ items: [] });
         } catch (error) {
             console.error('Error clearing cart:', error);
+            alert('Failed to clear cart.');
         }
     };
 
@@ -54,25 +58,39 @@ const CartPage = ({ cart, onUpdateCart }) => {
         }, 0);
     };
 
+    const getSafeImageUrl = (url) => {
+        if (!url || typeof url !== 'string' || url.trim() === '') {
+            return 'https://via.placeholder.com/100';
+        }
+        if (url.startsWith('/')) {
+            return `http://localhost:3000${url}`;
+        }
+        try {
+            new URL(url);
+            return url;
+        } catch {
+            return 'https://via.placeholder.com/100';
+        }
+    };
 
-    const handlleDebug = () => {
-        console.log("hhhh")
-    }
-
-    const shippingCost = 5.99; // Placeholder shipping cost
+    const shippingCost = 5.99;
     const total = calculateSubtotal() + shippingCost;
+
+    const validItems = cart.items && Array.isArray(cart.items)
+        ? cart.items.filter(item => item.product && item.product._id)
+        : [];
 
     return (
         <div className="p-6 max-w-6xl mx-auto">
             <h1 className="text-3xl font-bold mb-8 text-gray-800">Your Cart</h1>
 
-            {cart.items && cart.items.length > 0 ? (
+            {validItems.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Cart Items */}
                     <div className="lg:col-span-2">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-semibold text-gray-700">
-                                {cart.items.length} Item{cart.items.length !== 1 ? 's' : ''} in Cart
+                                {validItems.length} Item{validItems.length !== 1 ? 's' : ''} in Cart
                             </h2>
                             <button
                                 onClick={handleClearCart}
@@ -82,13 +100,13 @@ const CartPage = ({ cart, onUpdateCart }) => {
                             </button>
                         </div>
                         <div className="space-y-6">
-                            {cart.items.map((item) => (
+                            {validItems.map((item) => (
                                 <div
                                     key={item.product._id}
                                     className="flex items-center bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow"
                                 >
                                     <img
-                                        src={item.product.imageUrl || 'https://via.placeholder.com/100'}
+                                        src={getSafeImageUrl(item.product.imageUrl)}
                                         alt={item.product.name}
                                         className="w-24 h-24 object-cover rounded-md mr-4"
                                     />

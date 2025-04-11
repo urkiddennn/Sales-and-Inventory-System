@@ -1,11 +1,22 @@
-// src/index.ts
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server'; // Add this import
+import { serve } from '@hono/node-server';
 import { connectDB } from './config/db';
 import { env } from './config/env';
 import routes from './routes';
+import { cors } from 'hono/cors';
 
 const app = new Hono();
+
+// Apply CORS middleware before any routes
+app.use(
+  '*',
+  cors({
+    origin: ['http://localhost:5173'], // Explicitly allow the frontend origin
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow methods
+    allowHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
+    credentials: true, // Allow credentials (if needed, e.g., for cookies)
+  })
+);
 
 // Mount all routes under /api prefix
 app.route('/api', routes);
@@ -20,12 +31,15 @@ app.onError((err, c) => {
 const startServer = async () => {
   try {
     await connectDB(); // Connect to MongoDB
-    serve({
-      fetch: app.fetch, // Use Hono's fetch method
-      port: Number(env.PORT),
-    }, () => {
-      console.log(`Server running on port ${env.PORT}`);
-    });
+    serve(
+      {
+        fetch: app.fetch,
+        port: Number(env.PORT),
+      },
+      () => {
+        console.log(`Server running on port ${env.PORT}`);
+      }
+    );
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

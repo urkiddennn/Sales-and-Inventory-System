@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../../api';
 import { useAuth } from './AuthContext';
 
 const SignupPage = () => {
@@ -11,7 +10,7 @@ const SignupPage = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-    const { login: authLogin } = useAuth();
+    const { signup } = useAuth(); // Use the signup function from AuthContext
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,11 +25,10 @@ const SignupPage = () => {
 
         try {
             const userData = { name, email, password };
-            const response = await register(userData);
-            authLogin(response.token); // Update auth state
-            navigate('/');
+            await signup(userData); // Call the signup function from AuthContext
+            navigate('/'); // Redirect to home page after successful registration
         } catch (err) {
-            setError('Registration failed. Please try again.');
+            setError(err.message || 'Registration failed. Please try again.');
         } finally {
             setIsLoading(false);
         }

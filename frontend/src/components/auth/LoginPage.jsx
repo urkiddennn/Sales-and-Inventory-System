@@ -1,27 +1,55 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { login } from '../../api';
-import { useAuth } from './AuthContext';
+// src/components/LoginPage.jsx
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { login as apiLogin } from "../../api"; // Adjust path if needed
+import { useAuth } from "./AuthContext"; // Adjust path if needed
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const { login: authLogin } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setError("");
         setIsLoading(true);
 
         try {
-            const response = await login({ email, password });
-            authLogin(response.token); // Update auth state
-            navigate('/');
+            const response = await apiLogin({ email, password });
+            console.log("API Login Response:", response);
+
+            // Validate response structure
+            if (!response || !response.token || !response.user || !response.user.role) {
+                console.error("Login response missing expected fields:", response);
+                setError("Login failed: Unexpected response from server.");
+                setIsLoading(false);
+                return;
+            }
+
+            const { token, user } = response;
+
+            // Call AuthContext login with token and role
+            authLogin(token, user.role);
+
+            // Navigate based on role
+            if (user.role === "admin") {
+                console.log("Admin user detected. Navigating to /admin/products");
+                navigate("/admin/products");
+            } else {
+                console.log("Regular user detected. Navigating to /");
+                navigate("/");
+            }
         } catch (err) {
-            setError('Invalid email or password. Please try again.');
+            console.error("Login API call failed:", err);
+            // Use err.status from api.jsx's custom Error
+            if (err.status === 401) {
+                setError("Invalid email or password. Please try again.");
+            } else {
+                setError(err.message || "Login failed. Please try again later.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -38,6 +66,7 @@ const LoginPage = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email Input */}
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email Address
@@ -50,9 +79,11 @@ const LoginPage = () => {
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="your@email.com"
+                        autoComplete="email"
                     />
                 </div>
 
+                {/* Password Input */}
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                         Password
@@ -65,9 +96,11 @@ const LoginPage = () => {
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="••••••••"
+                        autoComplete="current-password"
                     />
                 </div>
 
+                {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
                         <input
@@ -79,7 +112,6 @@ const LoginPage = () => {
                             Remember me
                         </label>
                     </div>
-
                     <div className="text-sm">
                         <Link to="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
                             Forgot your password?
@@ -87,20 +119,22 @@ const LoginPage = () => {
                     </div>
                 </div>
 
+                {/* Submit Button */}
                 <div>
                     <button
                         type="submit"
                         disabled={isLoading}
                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-800 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                     >
-                        {isLoading ? 'Signing in...' : 'Sign in'}
+                        {isLoading ? "Signing in..." : "Sign in"}
                     </button>
                 </div>
             </form>
 
+            {/* Sign Up Link */}
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                    Don't have an account?{' '}
+                    Don’t have an account?{" "}
                     <Link to="/signup" className="font-medium text-green-600 hover:text-green-500">
                         Sign up
                     </Link>

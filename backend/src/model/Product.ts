@@ -1,6 +1,20 @@
-import mongoose from 'mongoose';
+// src/models/Product.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-const productSchema = new mongoose.Schema({
+export interface IProduct extends Document {
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  imageUrl?: string;
+  category?: string;
+  isOnSale: boolean;
+  salePrice?: number;
+  ratings?: number;
+  createdAt: Date;
+}
+
+const productSchema = new Schema<IProduct>({
   name: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
@@ -8,18 +22,18 @@ const productSchema = new mongoose.Schema({
   imageUrl: String,
   category: String,
   isOnSale: { type: Boolean, default: false },
-  salePrice: { type: Number },
-  createdAt: { type: Date, default: Date.now }
+  salePrice: Number,
+  ratings: Number,
+  createdAt: { type: Date, default: Date.now },
 });
 
-// Add validation to ensure salePrice is only set when isOnSale is true
-productSchema.pre('save', function(next) {
+productSchema.pre("save", function (next) {
   if (!this.isOnSale) {
     this.salePrice = undefined;
   } else if (!this.salePrice || this.salePrice >= this.price) {
-    this.salePrice = this.price * 0.9; // Default 10% discount if not specified or invalid
+    this.salePrice = this.price * 0.9;
   }
   next();
 });
 
-export const Product = mongoose.model('Product', productSchema);
+export const Product = mongoose.model<IProduct>("Product", productSchema);

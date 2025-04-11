@@ -1,25 +1,27 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import ProductGrid from './components/ProductGrid';
-import FeaturedSection from './components/FeaturedSection';
-import Reviews from './components/Reviews';
-import Footer from './components/Footer';
-import ShoppingCart from './components/ShoppingCart';
-import CartPage from './components/cart/CartPage';
-import ProductsPage from './components/products/ProductPage';
-import LoginPage from './components/auth/LoginPage';
-import SignupPage from './components/auth/SignupPage';
-import { AuthProvider, useAuth } from './components/auth/AuthContext';
-import { getCart } from './api';
-import Hero from './components/hero/Hero';
-import Gap from './components/Gap';
-import YellowGap from './components/YellowGap';
-import BestDeals from './components/BestDeals';
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./components/Header";
+import ProductGrid from "./components/ProductGrid";
+import FeaturedSection from "./components/FeaturedSection";
+import Reviews from "./components/Reviews";
+import Footer from "./components/Footer";
+import ShoppingCart from "./components/ShoppingCart";
+import CartPage from "./components/cart/CartPage";
+import ProductsPage from "./components/products/ProductPage";
+import LoginPage from "./components/auth/LoginPage";
+import SignupPage from "./components/auth/SignupPage";
+import { AuthProvider, useAuth } from "./components/auth/AuthContext";
+import { getCart } from "./api";
+import Hero from "./components/hero/Hero";
+import Gap from "./components/Gap";
+import YellowGap from "./components/YellowGap";
+import BestDeals from "./components/BestDeals";
+import Admin from "./Admin/Admin";
+import { CartProvider } from "./components/cart/CartContext";
 
 // Protected route component
-const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, requiredRole }) => {
+    const { isAuthenticated, userRole, loading } = useAuth();
 
     if (loading) {
         return <div className="text-center py-12">Loading...</div>;
@@ -29,7 +31,16 @@ const ProtectedRoute = ({ children }) => {
         return <Navigate to="/login" />;
     }
 
+    if (requiredRole && userRole !== requiredRole) {
+        return <Navigate to="/" />;
+    }
+
     return children;
+};
+
+// Admin route component
+const AdminRoute = ({ children }) => {
+    return <ProtectedRoute requiredRole="admin">{children}</ProtectedRoute>;
 };
 
 const AppContent = () => {
@@ -41,11 +52,15 @@ const AppContent = () => {
         const fetchCart = async () => {
             if (isAuthenticated) {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                        throw new Error("No authentication token found");
+                    }
                     const data = await getCart(token);
-                    setCart(data);
+                    setCart(data || { items: [] });
                 } catch (error) {
-                    console.error('Error fetching cart:', error);
+                    console.error("Error fetching cart:", error);
+                    setCart({ items: [] }); // Reset cart on error
                 }
             } else {
                 setCart({ items: [] }); // Clear cart if not authenticated
@@ -54,65 +69,24 @@ const AppContent = () => {
         fetchCart();
     }, [isAuthenticated]);
 
-
     const handleAddToCart = (updatedCart) => {
         setCart(updatedCart);
         setIsCartOpen(true);
     };
 
     const handleUpdateCart = (updatedCart) => {
-        setCart(updatedCart);
+        setCart(updatedCart || { items: [] });
     };
 
     const toggleCart = () => {
         setIsCartOpen(!isCartOpen);
     };
 
-    return (
+    // Layout for non-admin routes
+    const NonAdminLayout = ({ children }) => (
         <div className="min-h-screen flex flex-col">
             <Header onCartClick={toggleCart} />
-            <main className="flex-grow">
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            < >
-                                <Hero />
-                                <div className='lg:p-20 p-2'>
-
-                                    <Gap />
-                                    <ProductGrid onAddToCart={handleAddToCart} />
-                                    <YellowGap />
-                                    <Gap />
-                                    <FeaturedSection />
-                                    <Gap />
-                                    <BestDeals />
-                                    <Reviews />
-                                </div>
-
-
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/cart"
-                        element={
-                            <ProtectedRoute>
-                                <CartPage cart={cart} onUpdateCart={handleUpdateCart} />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route path="/products" element={<ProductsPage onAddToCart={handleAddToCart} />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/about" element={<div className="p-6">About Page (Placeholder)</div>} />
-                    <Route path="/contact" element={<div className="p-6">Contact Page (Placeholder)</div>} />
-                    <Route path="/faq" element={<div className="p-6">FAQ Page (Placeholder)</div>} />
-                    <Route path="/return-policy" element={<div className="p-6">Return Policy Page (Placeholder)</div>} />
-                    <Route path="/privacy-policy" element={<div className="p-6">Privacy Policy Page (Placeholder)</div>} />
-                    <Route path="/forgot-password" element={<div className="p-6">Forgot Password Page (Placeholder)</div>} />
-                </Routes>
-            </main>
+            <main className="flex-grow">{children}</main>
             <Footer />
             <ShoppingCart
                 cart={cart}
@@ -122,13 +96,139 @@ const AppContent = () => {
             />
         </div>
     );
+
+    return (
+        <Routes>
+            {/* Admin Routes */}
+            <Route
+                path="/admin/*"
+                element={
+                    <AdminRoute>
+                        <Admin />
+                    </AdminRoute>
+                }
+            />
+            {/* Non-Admin Routes */}
+            <Route
+                path="/"
+                element={
+                    <NonAdminLayout>
+                        <Hero />
+                        <div className="lg:p-20 p-2">
+                            <Gap />
+                            <ProductGrid onAddToCart={handleAddToCart} />
+                            <YellowGap />
+                            <Gap />
+                            <FeaturedSection />
+                            <Gap />
+                            <BestDeals />
+                            <Reviews />
+                        </div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/cart"
+                element={
+                    <NonAdminLayout>
+                        <ProtectedRoute>
+                            <CartPage cart={cart} onUpdateCart={handleUpdateCart} />
+                        </ProtectedRoute>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/products"
+                element={
+                    <NonAdminLayout>
+                        <ProductsPage onAddToCart={handleAddToCart} />
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/login"
+                element={
+                    <NonAdminLayout>
+                        <LoginPage />
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/signup"
+                element={
+                    <NonAdminLayout>
+                        <SignupPage />
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/about"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">About Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/contact"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">Contact Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/faq"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">FAQ Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/return-policy"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">Return Policy Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/privacy-policy"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">Privacy Policy Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/forgot-password"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">Forgot Password Page (Placeholder)</div>
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="*"
+                element={
+                    <NonAdminLayout>
+                        <div className="p-6">404 - Page Not Found</div>
+                    </NonAdminLayout>
+                }
+            />
+        </Routes>
+    );
 };
 
 const App = () => {
     return (
         <Router>
             <AuthProvider>
-                <AppContent />
+                <CartProvider>
+
+                    <AppContent />
+                </CartProvider>
             </AuthProvider>
         </Router>
     );

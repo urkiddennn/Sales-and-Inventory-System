@@ -19,6 +19,7 @@ import BestDeals from "./components/BestDeals";
 import Admin from "./Admin/Admin";
 import { CartProvider } from "./components/cart/CartContext";
 import Profile from "./components/profile/Profile";
+import ProductDescriptionPage from "./components/products/ProductDescriptionPage";
 
 // Protected route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -147,6 +148,7 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
+            <Route path="/products/:productId" element={<ProductDescriptionPage/>} />
             <Route
                 path="/login"
                 element={

@@ -58,6 +58,11 @@ const ProductsPage = () => {
         }
     };
 
+    // Navigate to product description page
+    const handleProductClick = (productId) => {
+        navigate(`/products/${productId}`);
+    };
+
     // Filter products based on category and price range
     const filteredProducts = products.filter((product) => {
         const price = product.isOnSale && product.salePrice ? product.salePrice : (product.price || 0);
@@ -144,7 +149,8 @@ const ProductsPage = () => {
                                 {filteredProducts.map((product) => (
                                     <div
                                         key={product._id}
-                                        className="border border-gray-300 rounded-lg p-4 transition duration-300 hover:shadow-lg hover:border-green-800"
+                                        className="border border-gray-300 rounded-lg p-4 transition duration-300 hover:shadow-lg hover:border-green-800 cursor-pointer"
+                                        onClick={() => handleProductClick(product._id)}
                                     >
                                         <img
                                             src={product.imageUrl || "https://via.placeholder.com/150"}
@@ -155,15 +161,18 @@ const ProductsPage = () => {
                                         <p className="text-gray-600">
                                             {product.isOnSale && product.salePrice ? (
                                                 <>
-                                                    <span className="line-through text-gray-400 mr-2">${product.price}</span>
-                                                    <span className="text-red-600">${product.salePrice}</span>
+                                                    <span className="line-through text-gray-400 mr-2">₱{product.price}</span>
+                                                    <span className="text-red-600">₱{product.salePrice}</span>
                                                 </>
                                             ) : (
-                                                `$${product.price}`
+                                                `₱${product.price}`
                                             )}
                                         </p>
                                         <button
-                                            onClick={() => handleAddToCart(product._id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent triggering the card's onClick
+                                                handleAddToCart(product._id);
+                                            }}
                                             className="mt-4 w-full bg-green-800 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
                                         >
                                             Add to Cart

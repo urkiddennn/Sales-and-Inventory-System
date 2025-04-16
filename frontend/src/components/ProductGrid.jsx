@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { fetchProducts, addToCart } from "../api/";
-import { message } from "antd";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { fetchProducts } from '../api/';
+import { addToCart } from '../api/cart';
+import { message } from 'antd';
+import { useCart } from '../components/cart/CartContext';
 
-const ProductGrid = ({ onAddToCart }) => {
+const ProductGrid = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const { addToCart: addItemToCart } = useCart();
 
     // Fetch products when the component mounts
     useEffect(() => {
@@ -13,12 +17,12 @@ const ProductGrid = ({ onAddToCart }) => {
             try {
                 const data = await fetchProducts(); // No token required for public endpoint
                 if (!Array.isArray(data)) {
-                    throw new Error("Invalid data format received from server");
+                    throw new Error('Invalid data format received from server');
                 }
                 setProducts(data);
             } catch (error) {
-                console.error("Error fetching products:", error);
-                message.error(error.message || "Failed to load products");
+                console.error('Error fetching products:', error);
+                message.error(error.message || 'Failed to load products');
             } finally {
                 setLoading(false);
             }
@@ -29,17 +33,17 @@ const ProductGrid = ({ onAddToCart }) => {
     // Handle adding a product to the cart
     const handleAddToCart = async (productId) => {
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem('token');
             if (!token) {
-                message.error("Please log in to add items to cart");
+                message.error('Please log in to add items to cart');
                 return;
             }
             const updatedCart = await addToCart(token, { productId, quantity: 1 });
-            onAddToCart(updatedCart);
-            message.success("Added to cart");
+            addItemToCart(productId, 1); // Update CartContext state
+            message.success('Added to cart');
         } catch (error) {
-            console.error("Error adding to cart:", error);
-            message.error(error.message || "Failed to add to cart");
+            console.error('Error adding to cart:', error);
+            message.error(error.message || 'Failed to add to cart');
         }
     };
 
@@ -59,12 +63,14 @@ const ProductGrid = ({ onAddToCart }) => {
                             key={product._id}
                             className="border border-gray-300 rounded-lg p-4 transition duration-300 hover:shadow-lg hover:border-green-800"
                         >
-                            <img
-                                src={product.imageUrl || "https://via.placeholder.com/150"}
-                                alt={product.name || "Product Image"}
-                                className="w-full h-40 object-contain mb-4 rounded-md"
-                            />
-                            <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
+                            <Link to={`/products/${product._id}`}>
+                                <img
+                                    src={product.imageUrl || 'https://via.placeholder.com/150'}
+                                    alt={product.name || 'Product Image'}
+                                    className="w-full h-40 object-contain mb-4 rounded-md"
+                                />
+                                <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
+                            </Link>
                             <p className="text-gray-600">
                                 {product.isOnSale && product.salePrice ? (
                                     <>

@@ -1,5 +1,5 @@
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
-
+import { message } from "antd";
 export const addComment = async (token, commentData) => {
     try {
         console.log('Adding comment with data:', commentData);
@@ -39,6 +39,25 @@ export const getProductComments = async (token, productId) => {
         return response.json();
     } catch (error) {
         console.error('Error in getProductComments:', error);
+        throw error;
+    }
+};
+
+export const getAllComments = async (token) => {
+    try {
+        console.log('Fetching all comments from:', `${API_URL}/comments`);
+        const response = await fetch(`${API_URL}/comments`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch comments');
+        }
+        return await response.json();
+    } catch (error) {
+        message.error(error.message || 'An unexpected error occurred');
         throw error;
     }
 };

@@ -10,6 +10,7 @@ import * as orderController from '../controllers/orderController';
 import * as cartController from '../controllers/cartController';
 import * as detailsController from "../controllers/detailsController"
 import * as userController from "../controllers/userController"
+
 const app = new Hono();
 
 app.use(
@@ -19,19 +20,22 @@ app.use(
         // ... other options
     })
 );
+
 // Public routes
 app.post('/auth/register', authController.register);
 app.post('/auth/login', authController.login);
 
 // Protected routes
-
 app.use('/sales/*', authMiddleware);
 app.use('/chats/*', authMiddleware);
-app.use('/comments/*', authMiddleware);
 app.use('/orders/*', authMiddleware);
 app.use('/cart/*', authMiddleware);
-app.use('/users/*', authMiddleware)
+app.use('/users/*', authMiddleware);
 
+// Comment routes
+app.get('/comments', commentController.getAllComments); // Public
+app.post('/comments', authMiddleware, commentController.addComment);
+app.get('/comments/:productId', authMiddleware, commentController.getProductComments);
 
 // Public routes (accessible to everyone)
 app.get("/products", productController.getProducts); // Fetch all products
@@ -54,10 +58,6 @@ app.get('/sales', adminMiddleware, saleController.getSales);
 app.get('/chats', chatController.getChats);
 app.post('/chats', chatController.sendMessage);
 
-// Comment routes
-app.post('/comments', commentController.addComment);
-app.get('/comments/:productId', commentController.getProductComments);
-
 // Order routes
 app.post('/orders', orderController.createOrder);
 app.get('/orders', orderController.getOrders);
@@ -69,7 +69,7 @@ app.post('/cart', cartController.addToCart);
 app.delete('/cart', cartController.removeFromCart);
 app.put('/cart', cartController.updateCart)
 
-//users routes
+// Users routes
 app.get('/users', userController.getUser); // Matches Profile component
 app.put('/users/:id', userController.editUser);
 app.delete('/users/:id', userController.deleteUser);

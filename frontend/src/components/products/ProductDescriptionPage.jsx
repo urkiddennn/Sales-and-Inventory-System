@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { fetchProductById, addComment, getProductComments } from '../../api';
+import { addToCart } from '../../api';
 import { useCart } from '../../components/cart/CartContext';
+import { IoMdArrowBack } from "react-icons/io";
 
 const ProductDescriptionPage = () => {
     const { productId } = useParams(); // Get productId from URL
@@ -59,6 +61,7 @@ const ProductDescriptionPage = () => {
             }
 
             const cartData = { productId, quantity: 1 };
+            console.log('Adding to cart:', cartData);
             const updatedCart = await addToCart(token, cartData);
             onAddToCart(updatedCart);
             message.success('Added to cart successfully!');
@@ -100,6 +103,10 @@ const ProductDescriptionPage = () => {
             message.error(error.message || 'Failed to add comment');
         }
     };
+    //handle back button to the product page
+    const handleBackProductPage = () => {
+        navigate("/products")
+    }
 
     // Calculate average rating
     const averageRating = comments.length > 0
@@ -120,6 +127,10 @@ const ProductDescriptionPage = () => {
 
     return (
         <div className="px-8 max-w-7xl mx-auto py-8">
+            <button className='flex justify-center items-center gap-1 bg-green-700 p-1 text-white px-2 mb-3 rounded-sm' onClick={handleBackProductPage}>
+                <IoMdArrowBack />
+                <h1>Back</h1>
+            </button>
             <h1 className="text-3xl font-bold mb-8 text-gray-800">{product.name}</h1>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Product Image and Details */}

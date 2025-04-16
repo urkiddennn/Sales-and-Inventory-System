@@ -148,7 +148,12 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
-            <Route path="/products/:productId" element={<ProductDescriptionPage/>} />
+            <Route path="/products/:productId" element={
+                <NonAdminLayout>
+
+                    <ProductDescriptionPage />
+                </NonAdminLayout>
+            } />
             <Route
                 path="/login"
                 element={

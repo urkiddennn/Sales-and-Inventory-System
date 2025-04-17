@@ -30,13 +30,11 @@ export const login = async (credentials) => {
     console.log("Login API Success:", responseBody);
     return responseBody; // { token, user: { id, email, name, role } }
 };
-
 export const register = async (userData) => {
-    console.log(`Attempting registration to ${API_URL}/auth/register for:`, userData.email);
+    console.log(`Attempting registration to ${API_URL}/auth/register`); // Debug
     const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: userData, // Send FormData directly
     });
 
     let responseBody;
@@ -58,5 +56,5 @@ export const register = async (userData) => {
     }
 
     console.log("Registration API Success:", responseBody);
-    return responseBody; // { token, user: { id, email, name, role } }
+    return responseBody; // { token, user: { id, email, name, address, mobileNumber, profileUrl, role } }
 };

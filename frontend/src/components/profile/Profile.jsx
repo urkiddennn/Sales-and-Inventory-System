@@ -270,7 +270,7 @@ const Profile = () => {
                         <Col xs={24} sm={8} style={{ textAlign: "center" }}>
                             <Avatar
                                 key={user.profileUrl || "default"} // Force re-render
-                                size={96}
+                                size={200}
                                 src={user.profileUrl ? `${user.profileUrl}?t=${Date.now()}` : undefined} // Cache-busting
                                 style={{
                                     backgroundColor: user.profileUrl ? "transparent" : themeColor,

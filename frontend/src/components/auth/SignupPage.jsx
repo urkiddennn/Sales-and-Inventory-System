@@ -1,37 +1,98 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { Upload, message, Button } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 
 const SignupPage = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [address, setAddress] = useState('');
+    const [mobileNumber, setMobileNumber] = useState('');
+    const [fileList, setFileList] = useState([]);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-    const { signup } = useAuth(); // Use the signup function from AuthContext
+    const { signup } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        // Validate inputs
         if (password !== confirmPassword) {
             setError('Passwords do not match');
+            return;
+        }
+        if (!address) {
+            setError('Address is required');
+            return;
+        }
+        if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
+            setError('Please enter a valid 10-digit mobile number');
             return;
         }
 
         setIsLoading(true);
 
         try {
-            const userData = { name, email, password };
-            await signup(userData); // Call the signup function from AuthContext
-            navigate('/'); // Redirect to home page after successful registration
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('password', password);
+            formData.append('address', address);
+            formData.append('mobileNumber', mobileNumber);
+            if (fileList.length > 0 && fileList[0].originFileObj) {
+                console.log('Sending profilePicture:', fileList[0].originFileObj); // Debug
+                formData.append('profilePicture', fileList[0].originFileObj);
+            } else {
+                console.log('No profilePicture selected'); // Debug
+            }
+
+            // Debug FormData contents
+            console.log('FormData contents:');
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key}: ${value instanceof File ? `[File: ${value.name}]` : value}`);
+            }
+
+            await signup(formData);
+            navigate('/');
         } catch (err) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const uploadProps = {
+        onRemove: () => {
+            setFileList([]);
+            console.log('Removed file from fileList'); // Debug
+        },
+        beforeUpload: (file) => {
+            console.log('Selected file:', file); // Debug
+            const isImage = file.type.startsWith('image/');
+            if (!isImage) {
+                message.error('You can only upload image files!');
+                return false;
+            }
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if (!isLt2M) {
+                message.error('Image must be smaller than 2MB!');
+                return false;
+            }
+            setFileList([file]);
+            console.log('Updated fileList:', [file]); // Debug
+            return false; // Prevent automatic upload
+        },
+        onChange: (info) => {
+            console.log('Upload onChange:', info); // Debug
+            setFileList(info.fileList);
+        },
+        fileList,
+        accept: 'image/*',
     };
 
     return (
@@ -76,6 +137,36 @@ const SignupPage = () => {
                 </div>
 
                 <div>
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                        Address
+                    </label>
+                    <input
+                        id="address"
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="123 Main St, City, Country"
+                    />
+                </div>
+
+                <div>
+                    <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                        Mobile Number
+                    </label>
+                    <input
+                        id="mobileNumber"
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="1234567890"
+                    />
+                </div>
+
+                <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                         Password
                     </label>
@@ -102,6 +193,27 @@ const SignupPage = () => {
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="••••••••"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Profile Picture (Optional)
+                    </label>
+                    <Upload {...uploadProps}>
+                        <Button icon={<UploadOutlined />}>Upload Profile Picture</Button>
+                    </Upload>
+                    {/* Fallback native input */}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                            if (e.target.files[0]) {
+                                setFileList([{ originFileObj: e.target.files[0] }]);
+                                console.log('Selected file (native input):', e.target.files[0]);
+                            }
+                        }}
+                        className="mt-2"
                     />
                 </div>
 

@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return children;
 };
 
-// Admin route component
+
 const AdminRoute = ({ children }) => {
     return <ProtectedRoute requiredRole="admin">{children}</ProtectedRoute>;
 };

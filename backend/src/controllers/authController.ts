@@ -14,51 +14,43 @@ type CloudinaryUploadResult = UploadApiResponse | UploadApiErrorResponse;
 const isUploadSuccess = (result: CloudinaryUploadResult): result is UploadApiResponse => {
   return "secure_url" in result;
 };
-
 export const login = async (c: Context) => {
-  try {
-    const { email, password } = await c.req.json();
-
-    if (!email || !password) {
-      return c.json({ error: "Email and password are required" }, 400);
-    }
-
-    const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      console.log(`Login failed for ${email}: Invalid credentials`);
-      return c.json({ error: "Invalid credentials" }, 401);
-    }
-
-    console.log(`Login successful for ${email}, Role: ${user.role}`);
-
-    const payload = {
-      id: user._id.toString(),
-      role: user.role,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
-    };
-
-    const secret = env.JWT_SECRET;
-    if (!secret) {
-      console.error("FATAL: JWT_SECRET is not defined!");
-      return c.json({ error: "Internal server configuration error" }, 500);
-    }
-
-    const token = await sign(payload, secret);
-
-    return c.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
+    try {
+      const { email, password } = await c.req.json();
+      if (!email || !password) {
+        return c.json({ error: "Email and password are required" }, 400);
+      }
+      const user = await User.findOne({ email });
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        console.log(`Login failed for ${email}: Invalid credentials`);
+        return c.json({ error: "Invalid credentials" }, 401);
+      }
+      console.log(`Login successful for ${email}, Role: ${user.role}`);
+      const payload = {
+        id: user._id.toString(),
         role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error("Error in login controller:", error);
-    return c.json({ error: "Internal Server Error" }, 500);
-  }
-};
+        exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
+      };
+      const secret = env.JWT_SECRET;
+      if (!secret) {
+        console.error("FATAL: JWT_SECRET is not defined!");
+        return c.json({ error: "Internal server configuration error" }, 500);
+      }
+      const token = await sign(payload, secret);
+      return c.json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Error in login controller:", error);
+      return c.json({ error: "Internal Server Error" }, 500);
+    }
+  };
 
 export const register = async (c: Context) => {
   try {

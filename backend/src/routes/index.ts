@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { authMiddleware, adminMiddleware } from '../middleware/auth';
+import { getRateLimitMiddleware } from "../middleware/rateLimit";
 import * as authController from '../controllers/authController';
 import * as productController from '../controllers/productController';
 import * as saleController from '../controllers/saleController';
@@ -21,9 +22,11 @@ app.use(
     })
 );
 
+
+const rateLimit = getRateLimitMiddleware({ limit: 5, windowMs: 60 * 1000 });
 // Public routes
 app.post('/auth/register', authController.register);
-app.post('/auth/login', authController.login);
+app.post('/auth/login',rateLimit, authController.login);
 
 // Protected routes
 app.use('/sales/*', authMiddleware);

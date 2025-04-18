@@ -1,80 +1,95 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { message } from "antd";
 import { jwtDecode } from "jwt-decode";
-import { register } from "../../api/"; // Import register function
+import { register, login as apiLogin } from "../../api/";
 
 const AuthContext = createContext({
     isAuthenticated: false,
+    user: null,
     userRole: null,
     loading: true,
-    login: (token, role) => { },
+    login: async (email, password) => false,
     logout: () => { },
     signup: async (userData) => { },
 });
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const storedRole = localStorage.getItem("userRole");
+        const initializeAuth = async () => {
+            const token = localStorage.getItem("token");
+            const storedRole = localStorage.getItem("userRole");
 
-        if (token) {
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 const decoded = jwtDecode(token);
-                console.log("Decoded JWT on load:", decoded);
                 if (decoded.exp * 1000 < Date.now()) {
-                    console.log("Token expired");
                     message.error("Session expired. Please log in again.");
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("userRole");
-                    setIsAuthenticated(false);
-                    setUserRole(null);
-                } else if (storedRole && decoded.role === storedRole) {
-                    setIsAuthenticated(true);
-                    setUserRole(storedRole);
-                } else {
-                    console.log("Role mismatch or missing");
-                    message.error("Invalid session state. Please log in again.");
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("userRole");
-                    setIsAuthenticated(false);
-                    setUserRole(null);
+                    logout();
+                    return;
                 }
+                await fetchUser(token);
             } catch (error) {
-                console.error("Invalid token:", error);
                 message.error("Invalid session. Please log in again.");
-                localStorage.removeItem("token");
-                localStorage.removeItem("userRole");
-                setIsAuthenticated(false);
-                setUserRole(null);
+                logout();
+            } finally {
+                setLoading(false);
             }
-        } else {
-            setIsAuthenticated(false);
-            setUserRole(null);
-        }
-        setLoading(false);
+        };
+
+        initializeAuth();
     }, []);
 
-    const login = (token, role) => {
+    const fetchUser = async (token) => {
         try {
-            const decoded = jwtDecode(token);
-            console.log("Login JWT:", decoded);
-            if (decoded.role !== role) {
-                throw new Error("Role mismatch in token");
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                throw new Error("Failed to fetch user");
             }
-            localStorage.setItem("token", token);
-            localStorage.setItem("userRole", role);
+            const userData = await response.json();
+            setUser({
+                id: userData._id,
+                email: userData.email,
+                name: userData.name,
+                role: userData.role,
+            });
+            setUserRole(userData.role);
             setIsAuthenticated(true);
-            setUserRole(role);
-            console.log("Logged in successfully. Role:", role);
         } catch (error) {
-            console.error("Login error:", error);
-            message.error("Failed to log in. Invalid token.");
-            logout();
+            throw new Error("Invalid session");
+        }
+    };
+
+    const login = async (email, password) => {
+        try {
+            const data = await apiLogin({ email, password });
+            if (!data?.token || !data?.user?.role) {
+                throw new Error("Invalid response from server");
+            }
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("userRole", data.user.role);
+            setUser({
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.name,
+                role: data.user.role,
+            });
+            setUserRole(data.user.role);
+            setIsAuthenticated(true);
+            return true;
+        } catch (error) {
+            message.error(error.message || "Failed to log in");
+            return false;
         }
     };
 
@@ -82,26 +97,37 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
         setIsAuthenticated(false);
+        setUser(null);
         setUserRole(null);
         message.success("Logged out successfully");
     };
 
     const signup = async (userData) => {
         try {
-            const data = await register(userData); // Use register from api.jsx
-            if (!data.token || !data.user?.role) {
+            const data = await register(userData);
+            if (!data?.token || !data?.user?.role) {
                 throw new Error("Invalid response from server");
             }
-            login(data.token, data.user.role); // Automatically log in the user
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("userRole", data.user.role);
+            setUser({
+                id: data.user.id,
+                email: data.user.email,
+                name: userData.name,
+                role: data.user.role,
+            });
+            setUserRole(data.user.role);
+            setIsAuthenticated(true);
             return data;
         } catch (error) {
-            console.error("Error during registration:", error);
+            message.error(error.message || "Failed to register");
             throw error;
         }
     };
 
     const contextValue = {
         isAuthenticated,
+        user,
         userRole,
         loading,
         login,

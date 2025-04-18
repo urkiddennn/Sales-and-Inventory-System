@@ -1,4 +1,3 @@
-// src/controllers/userController.ts
 import { Context } from "hono";
 import { User } from "../model/User";
 import bcrypt from "bcryptjs";
@@ -142,4 +141,22 @@ export const deleteUser = async (c: Context) => {
     console.error("Error deleting user:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
+};
+
+export const getAdminUser = async (c: Context) => {
+    try {
+      const admin = await User.findOne({ role: "admin" }).select("_id name email role");
+      if (!admin) {
+        return c.json({ error: "No admin user found" }, 404);
+      }
+      return c.json({
+        _id: admin._id,
+        username: admin.name,
+        email: admin.email,
+        role: admin.role,
+      });
+    } catch (error: unknown) {
+      console.error("Error fetching admin user:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
 };

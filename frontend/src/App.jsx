@@ -22,6 +22,7 @@ import Profile from "./components/profile/Profile";
 import ProductDescriptionPage from "./components/products/ProductDescriptionPage";
 import OrdersPage from "./components/order/OrdersPage";
 import OrderPage from "./components/order/OrderPage";
+import ChatPage from "./components/chat/ChatPage";
 
 // Protected route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -41,7 +42,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
     return children;
 };
-
 
 const AdminRoute = ({ children }) => {
     return <ProtectedRoute requiredRole="admin">{children}</ProtectedRoute>;
@@ -64,10 +64,10 @@ const AppContent = () => {
                     setCart(data || { items: [] });
                 } catch (error) {
                     console.error("Error fetching cart:", error);
-                    setCart({ items: [] }); // Reset cart on error
+                    setCart({ items: [] });
                 }
             } else {
-                setCart({ items: [] }); // Clear cart if not authenticated
+                setCart({ items: [] });
             }
         };
         fetchCart();
@@ -86,7 +86,6 @@ const AppContent = () => {
         setIsCartOpen(!isCartOpen);
     };
 
-    // Layout for non-admin routes
     const NonAdminLayout = ({ children }) => (
         <div className="min-h-screen flex flex-col">
             <Header onCartClick={toggleCart} />
@@ -103,7 +102,6 @@ const AppContent = () => {
 
     return (
         <Routes>
-            {/* Admin Routes */}
             <Route
                 path="/admin/*"
                 element={
@@ -112,7 +110,6 @@ const AppContent = () => {
                     </AdminRoute>
                 }
             />
-            {/* Non-Admin Routes */}
             <Route
                 path="/"
                 element={
@@ -151,7 +148,6 @@ const AppContent = () => {
                     <OrderPage />
                 </NonAdminLayout>
             } />
-
             <Route
                 path="/products"
                 element={
@@ -162,7 +158,6 @@ const AppContent = () => {
             />
             <Route path="/products/:productId" element={
                 <NonAdminLayout>
-
                     <ProductDescriptionPage />
                 </NonAdminLayout>
             } />
@@ -230,9 +225,24 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
-            <Route path="/profile" element={<NonAdminLayout>
-                <Profile />
-            </NonAdminLayout>} />
+            <Route
+                path="/profile"
+                element={
+                    <NonAdminLayout>
+                        <Profile />
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/chats"
+                element={
+                    <NonAdminLayout>
+                        <ProtectedRoute>
+                            <ChatPage />
+                        </ProtectedRoute>
+                    </NonAdminLayout>
+                }
+            />
             <Route
                 path="*"
                 element={
@@ -250,7 +260,6 @@ const App = () => {
         <Router>
             <AuthProvider>
                 <CartProvider>
-
                     <AppContent />
                 </CartProvider>
             </AuthProvider>

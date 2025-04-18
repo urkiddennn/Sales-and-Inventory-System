@@ -73,6 +73,7 @@ app.put('/cart', cartController.updateCart)
 app.get('/users', userController.getUser); // Matches Profile component
 app.put('/users/:id', userController.editUser);
 app.delete('/users/:id', userController.deleteUser);
+app.get("/users/admin", userController.getAdminUser);
 
 // Details route
 app.post('/details', detailsController.createDetails)

@@ -7,20 +7,19 @@ export const getChats = async (c: Context) => {
   const chats = await Chat.find({ participants: userId }).populate('participants');
   return c.json(chats);
 };
-
 export const sendMessage = async (c: Context) => {
-  const userId = c.get('jwtPayload').id;
-  const { recipientId, content } = await c.req.json();
+    const userId = c.get("jwtPayload").id;
+    const { recipientId, content } = await c.req.json();
 
-  let chat = await Chat.findOne({
-    participants: { $all: [userId, recipientId] }
-  });
+    let chat = await Chat.findOne({
+      participants: { $all: [userId, recipientId] },
+    });
 
-  if (!chat) {
-    chat = new Chat({ participants: [userId, recipientId], messages: [] });
-  }
+    if (!chat) {
+      chat = new Chat({ participants: [userId, recipientId], messages: [] });
+    }
 
-  chat.messages.push({ sender: userId, content });
-  await chat.save();
-  return c.json(chat);
-};
+    chat.messages.push({ sender: userId, content });
+    await chat.save();
+    return c.json(chat);
+  };

@@ -40,6 +40,9 @@ const Header = ({ onCartClick }) => {
                     <Link to="/cart" className="hover:underline">
                         Cart
                     </Link>
+                    <Link to="/orders" className="hover:underline">
+                        Orders
+                    </Link>
                     <Link to="/about" className="hover:underline">
                         About
                     </Link>

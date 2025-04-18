@@ -61,7 +61,7 @@ app.post('/chats', chatController.sendMessage);
 // Order routes
 app.post('/orders', orderController.createOrder);
 app.get('/orders', orderController.getOrders);
-app.patch('/orders/:id/status', adminMiddleware, orderController.updateOrderStatus);
+app.patch('/orders/:id/status', orderController.updateOrderStatus);
 
 // Cart routes
 app.get('/cart', cartController.getCart);

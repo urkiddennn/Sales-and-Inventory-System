@@ -20,6 +20,8 @@ import Admin from "./Admin/Admin";
 import { CartProvider } from "./components/cart/CartContext";
 import Profile from "./components/profile/Profile";
 import ProductDescriptionPage from "./components/products/ProductDescriptionPage";
+import OrdersPage from "./components/order/OrdersPage";
+import OrderPage from "./components/order/OrderPage";
 
 // Protected route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -139,6 +141,16 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
+            <Route path="/orders" element={
+                <NonAdminLayout>
+                    <OrdersPage />
+                </NonAdminLayout>
+            } />
+            <Route path="/orders/:id" element={
+                <NonAdminLayout>
+                    <OrderPage />
+                </NonAdminLayout>
+            } />
 
             <Route
                 path="/products"

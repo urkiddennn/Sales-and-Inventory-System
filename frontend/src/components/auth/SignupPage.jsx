@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Upload, message, Button } from 'antd';
@@ -15,23 +15,39 @@ const SignupPage = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-    const { signup } = useAuth();
+    const { signup, isAuthenticated } = useAuth();
+
+    console.log("Rendering SignupPage", { isAuthenticated, path: window.location.pathname });
+
+    // Optional: Redirect authenticated users (uncomment to enable)
+    /*
+    useEffect(() => {
+        if (isAuthenticated) {
+            console.log("Redirecting authenticated user from /signup to /chats");
+            navigate("/chats");
+        }
+    }, [isAuthenticated, navigate]);
+    */
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        console.log("Submitting signup form");
 
         // Validate inputs
         if (password !== confirmPassword) {
             setError('Passwords do not match');
+            console.log("Validation error: Passwords do not match");
             return;
         }
         if (!address) {
             setError('Address is required');
+            console.log("Validation error: Address is required");
             return;
         }
         if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
             setError('Please enter a valid 10-digit mobile number');
+            console.log("Validation error: Invalid mobile number");
             return;
         }
 
@@ -45,22 +61,25 @@ const SignupPage = () => {
             formData.append('address', address);
             formData.append('mobileNumber', mobileNumber);
             if (fileList.length > 0 && fileList[0].originFileObj) {
-                console.log('Sending profilePicture:', fileList[0].originFileObj); // Debug
+                console.log('Sending profilePicture:', fileList[0].originFileObj);
                 formData.append('profilePicture', fileList[0].originFileObj);
             } else {
-                console.log('No profilePicture selected'); // Debug
+                console.log('No profilePicture selected');
             }
 
-            // Debug FormData contents
             console.log('FormData contents:');
             for (const [key, value] of formData.entries()) {
                 console.log(`${key}: ${value instanceof File ? `[File: ${value.name}]` : value}`);
             }
 
             await signup(formData);
+            console.log("Signup successful, navigating to /");
+            message.success("Registration successful!");
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Registration failed. Please try again.');
+            const errorMessage = err.message || 'Registration failed. Please try again.';
+            setError(errorMessage);
+            console.error("Signup error:", errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -69,10 +88,10 @@ const SignupPage = () => {
     const uploadProps = {
         onRemove: () => {
             setFileList([]);
-            console.log('Removed file from fileList'); // Debug
+            console.log('Removed file from fileList');
         },
         beforeUpload: (file) => {
-            console.log('Selected file:', file); // Debug
+            console.log('Selected file:', file);
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
                 message.error('You can only upload image files!');
@@ -84,11 +103,11 @@ const SignupPage = () => {
                 return false;
             }
             setFileList([file]);
-            console.log('Updated fileList:', [file]); // Debug
+            console.log('Updated fileList:', [file]);
             return false; // Prevent automatic upload
         },
         onChange: (info) => {
-            console.log('Upload onChange:', info); // Debug
+            console.log('Upload onChange:', info);
             setFileList(info.fileList);
         },
         fileList,
@@ -116,6 +135,7 @@ const SignupPage = () => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="John Doe"
                     />
@@ -131,6 +151,7 @@ const SignupPage = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="your@email.com"
                     />
@@ -146,6 +167,7 @@ const SignupPage = () => {
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="123 Main St, City, Country"
                     />
@@ -161,6 +183,7 @@ const SignupPage = () => {
                         value={mobileNumber}
                         onChange={(e) => setMobileNumber(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="1234567890"
                     />
@@ -176,6 +199,7 @@ const SignupPage = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="••••••••"
                     />
@@ -191,6 +215,7 @@ const SignupPage = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                        disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="••••••••"
                     />
@@ -201,18 +226,20 @@ const SignupPage = () => {
                         Profile Picture (Optional)
                     </label>
                     <Upload {...uploadProps}>
-                        <Button icon={<UploadOutlined />}>Upload Profile Picture</Button>
+                        <Button icon={<UploadOutlined />} disabled={isLoading}>
+                            Upload Profile Picture
+                        </Button>
                     </Upload>
-                    {/* Fallback native input */}
                     <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
                             if (e.target.files[0]) {
-                                setFileList([{ originFileObj: e.target.files[0] }]);
+                                setFileList([{ originFileObj: e.target.files[0], uid: '-1', name: e.target.files[0].name }]);
                                 console.log('Selected file (native input):', e.target.files[0]);
                             }
                         }}
+                        disabled={isLoading}
                         className="mt-2"
                     />
                 </div>
@@ -222,6 +249,7 @@ const SignupPage = () => {
                         id="terms"
                         type="checkbox"
                         required
+                        disabled={isLoading}
                         className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                     />
                     <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">

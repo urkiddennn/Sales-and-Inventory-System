@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect, memo } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { message } from "antd";
 import Header from "./components/Header";
 import ProductGrid from "./components/ProductGrid";
 import FeaturedSection from "./components/FeaturedSection";
@@ -24,22 +25,49 @@ import OrdersPage from "./components/order/OrdersPage";
 import OrderPage from "./components/order/OrderPage";
 import ChatPage from "./components/chat/ChatPage";
 
+// Public route component
+const PublicRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+    console.log("PublicRoute:", { isAuthenticated, loading, path: location.pathname });
+
+    if (loading) {
+        return <div className="text-center py-12">Loading...</div>;
+    }
+
+    // Redirect authenticated users from /login and /signup to /
+    if (isAuthenticated && ["/login", "/signup"].includes(location.pathname)) {
+        console.log("PublicRoute: Redirecting authenticated user to / from", location.pathname);
+        return <Navigate to="/" replace />;
+    }
+
+    console.log("PublicRoute: Rendering route:", location.pathname);
+    return children;
+};
+
 // Protected route component
 const ProtectedRoute = ({ children, requiredRole }) => {
     const { isAuthenticated, userRole, loading } = useAuth();
+    const location = useLocation();
+    console.log("ProtectedRoute:", { isAuthenticated, userRole, loading, path: location.pathname });
 
     if (loading) {
         return <div className="text-center py-12">Loading...</div>;
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" />;
+        console.log("ProtectedRoute: Redirecting to /login: Not authenticated");
+        message.error("Please log in to access this page.");
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     if (requiredRole && userRole !== requiredRole) {
-        return <Navigate to="/" />;
+        console.log(`ProtectedRoute: Redirecting to /: Missing required role ${requiredRole}`);
+        message.error(`You need ${requiredRole} privileges to access this page`);
+        return <Navigate to="/" replace />;
     }
 
+    console.log("ProtectedRoute: Rendering route:", location.pathname);
     return children;
 };
 
@@ -47,13 +75,31 @@ const AdminRoute = ({ children }) => {
     return <ProtectedRoute requiredRole="admin">{children}</ProtectedRoute>;
 };
 
+const NonAdminLayout = memo(({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+    console.log("NonAdminLayout: Rendering for path:", location.pathname, { isAuthenticated, loading });
+
+    return (
+        <div className="min-h-screen flex flex-col">
+            <Header onCartClick={() => console.log("Cart clicked")} />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+        </div>
+    );
+});
+
 const AppContent = () => {
     const [cart, setCart] = useState({ items: [] });
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+
+    console.log("AppContent:", { isAuthenticated, loading, path: location.pathname });
 
     useEffect(() => {
         const fetchCart = async () => {
+            console.log("AppContent: Fetching cart, isAuthenticated:", isAuthenticated);
             if (isAuthenticated) {
                 try {
                     const token = localStorage.getItem("token");
@@ -62,43 +108,34 @@ const AppContent = () => {
                     }
                     const data = await getCart(token);
                     setCart(data || { items: [] });
+                    console.log("AppContent: Cart fetched:", data);
                 } catch (error) {
-                    console.error("Error fetching cart:", error);
+                    console.error("AppContent: Error fetching cart:", error.message);
                     setCart({ items: [] });
                 }
             } else {
                 setCart({ items: [] });
+                console.log("AppContent: Cart reset (not authenticated)");
             }
         };
         fetchCart();
     }, [isAuthenticated]);
 
     const handleAddToCart = (updatedCart) => {
+        console.log("AppContent: Adding to cart:", updatedCart);
         setCart(updatedCart);
         setIsCartOpen(true);
     };
 
     const handleUpdateCart = (updatedCart) => {
+        console.log("AppContent: Updating cart:", updatedCart);
         setCart(updatedCart || { items: [] });
     };
 
     const toggleCart = () => {
+        console.log("AppContent: Toggling cart, isCartOpen:", !isCartOpen);
         setIsCartOpen(!isCartOpen);
     };
-
-    const NonAdminLayout = ({ children }) => (
-        <div className="min-h-screen flex flex-col">
-            <Header onCartClick={toggleCart} />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-            <ShoppingCart
-                cart={cart}
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onUpdateCart={handleUpdateCart}
-            />
-        </div>
-    );
 
     return (
         <Routes>
@@ -132,22 +169,26 @@ const AppContent = () => {
                 path="/cart"
                 element={
                     <NonAdminLayout>
-                        <ProtectedRoute>
-                            <CartPage cart={cart} onUpdateCart={handleUpdateCart} />
-                        </ProtectedRoute>
+                        <CartPage cart={cart} onUpdateCart={handleUpdateCart} />
                     </NonAdminLayout>
                 }
             />
-            <Route path="/orders" element={
-                <NonAdminLayout>
-                    <OrdersPage />
-                </NonAdminLayout>
-            } />
-            <Route path="/orders/:id" element={
-                <NonAdminLayout>
-                    <OrderPage />
-                </NonAdminLayout>
-            } />
+            <Route
+                path="/orders"
+                element={
+                    <NonAdminLayout>
+                        <OrdersPage />
+                    </NonAdminLayout>
+                }
+            />
+            <Route
+                path="/orders/:id"
+                element={
+                    <NonAdminLayout>
+                        <OrderPage />
+                    </NonAdminLayout>
+                }
+            />
             <Route
                 path="/products"
                 element={
@@ -156,16 +197,21 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
-            <Route path="/products/:productId" element={
-                <NonAdminLayout>
-                    <ProductDescriptionPage />
-                </NonAdminLayout>
-            } />
+            <Route
+                path="/products/:productId"
+                element={
+                    <NonAdminLayout>
+                        <ProductDescriptionPage />
+                    </NonAdminLayout>
+                }
+            />
             <Route
                 path="/login"
                 element={
                     <NonAdminLayout>
-                        <LoginPage />
+                        <PublicRoute>
+                            <LoginPage />
+                        </PublicRoute>
                     </NonAdminLayout>
                 }
             />
@@ -173,7 +219,9 @@ const AppContent = () => {
                 path="/signup"
                 element={
                     <NonAdminLayout>
-                        <SignupPage />
+                        <PublicRoute>
+                            <SignupPage />
+                        </PublicRoute>
                     </NonAdminLayout>
                 }
             />
@@ -237,9 +285,7 @@ const AppContent = () => {
                 path="/chats"
                 element={
                     <NonAdminLayout>
-                        <ProtectedRoute>
-                            <ChatPage />
-                        </ProtectedRoute>
+                        <ChatPage />
                     </NonAdminLayout>
                 }
             />
@@ -247,7 +293,9 @@ const AppContent = () => {
                 path="*"
                 element={
                     <NonAdminLayout>
-                        <div className="p-6">404 - Page Not Found</div>
+                        <div className="p-6">
+                            404 - Page Not Found (Path: {location.pathname})
+                        </div>
                     </NonAdminLayout>
                 }
             />
@@ -256,6 +304,7 @@ const AppContent = () => {
 };
 
 const App = () => {
+    console.log("App: Rendering App component");
     return (
         <Router>
             <AuthProvider>

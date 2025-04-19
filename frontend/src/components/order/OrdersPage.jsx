@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { getOrders } from "../../api"
-import { message, Spin, Input, Select, Empty, Pagination, Badge, Tooltip, Card, Tabs } from "antd"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { getOrders } from "../../api";
+import { message, Spin, Input, Select, Empty, Pagination, Badge, Tooltip, Card, Tabs } from "antd";
 import {
     SearchOutlined,
     ShoppingOutlined,
@@ -13,54 +14,62 @@ import {
     ClockCircleOutlined,
     CarOutlined,
     HomeOutlined,
-} from "@ant-design/icons"
-import GreenButton from "./green-button"
+} from "@ant-design/icons";
+import GreenButton from "./green-button";
 
-const { Option } = Select
-const { TabPane } = Tabs
+const { Option } = Select;
+const { TabPane } = Tabs;
 
 const OrdersPage = () => {
-    const navigate = useNavigate()
-    const [orders, setOrders] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [filteredOrders, setFilteredOrders] = useState([])
-    const [searchTerm, setSearchTerm] = useState("")
-    const [statusFilter, setStatusFilter] = useState("all")
-    const [sortBy, setSortBy] = useState("date-desc")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(5)
+    const navigate = useNavigate();
+    const { isAuthenticated, loading: authLoading } = useAuth();
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filteredOrders, setFilteredOrders] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("date-desc");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
 
     useEffect(() => {
         const fetchOrders = async () => {
+            if (authLoading) return;
+
+            if (!isAuthenticated) {
+                console.log("OrdersPage: Not authenticated, redirecting to /login");
+                message.error("Please log in to view orders.");
+                navigate("/login");
+                return;
+            }
+
             try {
-                const token = localStorage.getItem("token")
-                if (!token) {
-                    message.error("Please log in to view orders.")
-                    navigate("/login")
-                    return
-                }
-                const ordersData = await getOrders(token)
-                setOrders(ordersData)
-                setFilteredOrders(ordersData)
+                console.log("OrdersPage: Fetching orders");
+                const token = localStorage.getItem("token");
+                const ordersData = await getOrders(token);
+                setOrders(ordersData);
+                setFilteredOrders(ordersData);
+                console.log("OrdersPage: Orders fetched:", ordersData.length);
             } catch (error) {
-                message.error("Failed to fetch orders")
+                console.error("OrdersPage: Failed to fetch orders:", error.message);
+                message.error("Failed to fetch orders");
                 if (error.message && error.message.includes("Unauthorized")) {
-                    navigate("/login")
+                    navigate("/login");
                 }
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        }
-        fetchOrders()
-    }, [navigate])
+        };
+        fetchOrders();
+    }, [navigate, isAuthenticated, authLoading]);
 
     useEffect(() => {
-        // Apply filters and sorting
-        let result = [...orders]
+        console.log("OrdersPage: Applying filters and sorting", { statusFilter, searchTerm, sortBy });
+        let result = [...orders];
 
         // Apply status filter
         if (statusFilter !== "all") {
-            result = result.filter((order) => order.status === statusFilter)
+            result = result.filter((order) => order.status === statusFilter);
         }
 
         // Apply search
@@ -70,86 +79,86 @@ const OrdersPage = () => {
                     order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     (order.products &&
                         order.products.some((item) => item.product.name.toLowerCase().includes(searchTerm.toLowerCase()))),
-            )
+            );
         }
 
         // Apply sorting
         switch (sortBy) {
             case "date-asc":
-                result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-                break
+                result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
             case "date-desc":
-                result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                break
+                result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
             case "total-asc":
-                result.sort((a, b) => calculateTotal(a) - calculateTotal(b))
-                break
+                result.sort((a, b) => calculateTotal(a) - calculateTotal(b));
+                break;
             case "total-desc":
-                result.sort((a, b) => calculateTotal(b) - calculateTotal(a))
-                break
+                result.sort((a, b) => calculateTotal(b) - calculateTotal(a));
+                break;
             default:
-                break
+                break;
         }
 
-        setFilteredOrders(result)
-        setCurrentPage(1) // Reset to first page when filters change
-    }, [orders, statusFilter, searchTerm, sortBy])
+        setFilteredOrders(result);
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [orders, statusFilter, searchTerm, sortBy]);
 
     const calculateTotal = (order) => {
-        const subtotal = order.products.reduce((total, item) => total + item.price * item.quantity, 0)
-        return subtotal + 5.99 // Adding shipping cost
-    }
+        const subtotal = order.products.reduce((total, item) => total + item.price * item.quantity, 0);
+        return subtotal + 5.99; // Adding shipping cost
+    };
 
     const getStatusBadge = (status) => {
         switch (status) {
             case "pending":
-                return <Badge status="warning" text="Pending" />
+                return <Badge status="warning" text="Pending" />;
             case "processing":
-                return <Badge status="processing" color="green" text="Processing" />
+                return <Badge status="processing" color="green" text="Processing" />;
             case "shipped":
-                return <Badge status="default" color="green" text="Shipped" />
+                return <Badge status="default" color="green" text="Shipped" />;
             case "delivered":
-                return <Badge status="success" text="Delivered" />
+                return <Badge status="success" text="Delivered" />;
             default:
-                return <Badge status="default" text={status} />
+                return <Badge status="default" text={status} />;
         }
-    }
+    };
 
     const getStatusIcon = (status) => {
         switch (status) {
             case "pending":
-                return <ClockCircleOutlined style={{ color: "orange" }} />
+                return <ClockCircleOutlined style={{ color: "orange" }} />;
             case "processing":
-                return <CheckCircleOutlined style={{ color: "green" }} />
+                return <CheckCircleOutlined style={{ color: "green" }} />;
             case "shipped":
-                return <CarOutlined style={{ color: "green" }} />
+                return <CarOutlined style={{ color: "green" }} />;
             case "delivered":
-                return <HomeOutlined style={{ color: "green" }} />
+                return <HomeOutlined style={{ color: "green" }} />;
             default:
-                return <ClockCircleOutlined />
+                return <ClockCircleOutlined />;
         }
-    }
+    };
 
     // Get current orders for pagination
-    const indexOfLastOrder = currentPage * pageSize
-    const indexOfFirstOrder = indexOfLastOrder - pageSize
-    const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder)
+    const indexOfLastOrder = currentPage * pageSize;
+    const indexOfFirstOrder = indexOfLastOrder - pageSize;
+    const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
 
     const handlePageChange = (page, pageSize) => {
-        setCurrentPage(page)
-    }
+        setCurrentPage(page);
+    };
 
     const handleShowSizeChange = (current, size) => {
-        setPageSize(size)
-        setCurrentPage(1)
-    }
+        setPageSize(size);
+        setCurrentPage(1);
+    };
 
-    if (loading) {
+    if (authLoading || loading) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <Spin size="large" tip="Loading your orders..." />
             </div>
-        )
+        );
     }
 
     return (
@@ -294,8 +303,8 @@ const OrdersPage = () => {
                     {(searchTerm || statusFilter !== "all") && (
                         <GreenButton
                             onClick={() => {
-                                setSearchTerm("")
-                                setStatusFilter("all")
+                                setSearchTerm("");
+                                setStatusFilter("all");
                             }}
                             className="mt-4"
                         >
@@ -305,7 +314,7 @@ const OrdersPage = () => {
                 </div>
             )}
         </div>
-    )
-}
+    );
+};
 
-export default OrdersPage
+export default OrdersPage;

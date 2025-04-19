@@ -1,46 +1,47 @@
-import React, { useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const LoginPage = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    const handleSubmit = useCallback(
-        async (e) => {
-            e.preventDefault();
-            if (isLoading) return; // Prevent multiple submissions
-            setError("");
-            setIsLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
 
-            try {
-                const success = await login(email, password);
-                if (success) {
-                    const role = localStorage.getItem("userRole");
-                    if (role === "admin") {
-                        navigate("/admin/products");
-                    } else {
-                        navigate("/chat");
-                    }
-                } else {
-                    setError("Login failed: Invalid credentials or server issue.");
-                }
-            } catch (err) {
-                setError(err.message || "Login failed. Please try again later.");
-            } finally {
-                setIsLoading(false);
+        try {
+            console.log("Attempting login with:", { email });
+            const success = await login(email, password);
+            if (success) {
+                console.log("Login successful, navigating to /");
+                navigate('/');
+            } else {
+                setError('Invalid email or password');
+                console.log("Login failed: Invalid credentials");
             }
-        },
-        [email, password, isLoading, login, navigate]
-    );
+        } catch (err) {
+            const errorMessage = err.message || 'Login failed. Please try again.';
+            setError(errorMessage);
+            console.error("Login error:", errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSignupClick = () => {
+        console.log("Signup link clicked, navigating to /signup");
+        navigate("/signup")
+    };
 
     return (
         <div className="max-w-md mx-auto my-12 p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Login to Your Account</h1>
+            <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Sign In</h1>
 
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
@@ -62,7 +63,6 @@ const LoginPage = () => {
                         disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="your@email.com"
-                        autoComplete="email"
                     />
                 </div>
 
@@ -79,7 +79,6 @@ const LoginPage = () => {
                         disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="••••••••"
-                        autoComplete="current-password"
                     />
                 </div>
 
@@ -88,13 +87,14 @@ const LoginPage = () => {
                         <input
                             id="remember-me"
                             type="checkbox"
-                            disabled={isLoading}
                             className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            disabled={isLoading}
                         />
                         <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                             Remember me
                         </label>
                     </div>
+
                     <div className="text-sm">
                         <Link to="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
                             Forgot your password?
@@ -108,17 +108,15 @@ const LoginPage = () => {
                         disabled={isLoading}
                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-800 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                     >
-                        {isLoading ? "Signing in..." : "Sign in"}
+                        {isLoading ? 'Signing in...' : 'Sign in'}
                     </button>
                 </div>
             </form>
 
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                    Don’t have an account?{" "}
-                    <Link to="/signup" className="font-medium text-green-600 hover:text-green-500">
-                        Sign up
-                    </Link>
+                    Don't have an account?{' '}
+                    <a className="font-medium text-green-600 hover:text-green-500" onClick={handleSignupClick}> Signup</a>
                 </p>
             </div>
         </div>

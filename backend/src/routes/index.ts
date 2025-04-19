@@ -26,7 +26,7 @@ app.use(
 const rateLimit = getRateLimitMiddleware({ limit: 5, windowMs: 60 * 1000 });
 // Public routes
 app.post('/auth/register', authController.register);
-app.post('/auth/login',rateLimit, authController.login);
+app.post('/auth/login', authController.login);
 
 // Protected routes
 app.use('/sales/*', authMiddleware);

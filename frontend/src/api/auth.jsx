@@ -1,9 +1,11 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 export const login = async (credentials) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
     try {
+        console.log("Login request to:", `${API_URL}/auth/login`, "Credentials:", credentials);
         const response = await fetch(`${API_URL}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -12,9 +14,11 @@ export const login = async (credentials) => {
         });
 
         clearTimeout(timeoutId);
+        console.log("Login response status:", response.status);
 
         if (!response.ok) {
             const responseBody = await response.json().catch(() => ({}));
+            console.error("Login error response:", responseBody);
             const errorMessage = responseBody?.error || `Login failed with status ${response.status}`;
             const error = new Error(errorMessage);
             error.status = response.status;
@@ -22,12 +26,14 @@ export const login = async (credentials) => {
         }
 
         const responseBody = await response.json();
+        console.log("Login response body:", responseBody);
         if (!responseBody.token || !responseBody.user || !responseBody.user.role) {
             throw new Error("Invalid response: Missing token or user data");
         }
 
         return responseBody; // { token, user: { id, email, name, role } }
     } catch (error) {
+        console.error("Login fetch error:", error);
         if (error.name === "AbortError") {
             throw new Error("Request timed out. Please try again.");
         }

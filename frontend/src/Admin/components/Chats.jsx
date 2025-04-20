@@ -1,243 +1,246 @@
 "use client"
 
-import { useState } from "react"
-import { Row, Col, List, Input, Button, Avatar, Card, Typography, Empty } from "antd"
-import { SendOutlined, UserOutlined } from "@ant-design/icons"
-
-const { Search } = Input
-const { Text } = Typography
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { Input, Button, Avatar, Empty, message, Spin } from "antd"
+import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons"
+import { getChats, sendMessage } from "../../api"
 
 const Chats = () => {
+    const navigate = useNavigate()
+    const [chats, setChats] = useState([])
     const [selectedChat, setSelectedChat] = useState(null)
     const [messageInput, setMessageInput] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [loading, setLoading] = useState(false)
 
-    // Sample chat data based on the model
-    const [chats, setChats] = useState([
-        {
-            id: "1",
-            participants: [
-                { id: "1", name: "John Doe", email: "john@example.com" },
-                { id: "admin", name: "Admin User", email: "admin@example.com" },
-            ],
-            messages: [
-                { id: "1", sender: "1", content: "Hello, I need help with my order #12345", timestamp: "2023-09-15T10:25:00Z" },
-                {
-                    id: "2",
-                    sender: "admin",
-                    content: "Hi John, I'd be happy to help. What seems to be the issue?",
-                    timestamp: "2023-09-15T10:28:00Z",
-                },
-                {
-                    id: "3",
-                    sender: "1",
-                    content: "I ordered the wrong size. Can I exchange it?",
-                    timestamp: "2023-09-15T10:30:00Z",
-                },
-            ],
-        },
-        {
-            id: "2",
-            participants: [
-                { id: "2", name: "Jane Smith", email: "jane@example.com" },
-                { id: "admin", name: "Admin User", email: "admin@example.com" },
-            ],
-            messages: [
-                { id: "1", sender: "2", content: "Hi, is the blue shirt in stock?", timestamp: "2023-09-14T15:10:00Z" },
-                { id: "2", sender: "admin", content: "Yes, we have all sizes available", timestamp: "2023-09-14T15:15:00Z" },
-                { id: "3", sender: "2", content: "Thanks for your help!", timestamp: "2023-09-14T15:20:00Z" },
-            ],
-        },
-        {
-            id: "3",
-            participants: [
-                { id: "3", name: "Bob Johnson", email: "bob@example.com" },
-                { id: "admin", name: "Admin User", email: "admin@example.com" },
-            ],
-            messages: [
-                { id: "1", sender: "3", content: "I placed an order yesterday", timestamp: "2023-09-14T09:05:00Z" },
-                { id: "2", sender: "3", content: "When will my order ship?", timestamp: "2023-09-14T09:10:00Z" },
-            ],
-        },
-    ])
+    // Debug function to check localStorage
+    useEffect(() => {
+        console.log("All localStorage keys:")
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            console.log(`${key}: ${localStorage.getItem(key)}`)
+        }
+    }, [])
 
-    // Format date for display
+    const token = localStorage.getItem("token")
+
+    useEffect(() => {
+        if (!token) {
+            message.error("Please log in to view chats")
+            navigate("/login")
+            return
+        }
+
+        const fetchChats = async () => {
+            setLoading(true)
+            try {
+                const fetchedChats = await getChats(token)
+                setChats(fetchedChats)
+                if (fetchedChats.length > 0 && !selectedChat) {
+                    setSelectedChat(fetchedChats[0])
+                }
+            } catch (error) {
+                message.error(error.message || "Failed to fetch chats")
+                console.error("Fetch chats error:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchChats()
+    }, [token, navigate])
+
     const formatDate = (dateString) => {
         const date = new Date(dateString)
         return date.toLocaleString()
     }
 
-    // Get the last message from a chat
     const getLastMessage = (chat) => {
-        if (chat.messages.length === 0) return null
+        if (!chat.messages || chat.messages.length === 0) return null
         return chat.messages[chat.messages.length - 1]
     }
 
-    // Get the other participant (not admin)
     const getOtherParticipant = (chat) => {
-        return chat.participants.find((p) => p.id !== "admin")
+        return chat.participants.find((p) => p._id !== localStorage.getItem("userId"))
     }
 
-    // Filter chats based on search query
     const filteredChats = chats.filter((chat) => {
         const otherParticipant = getOtherParticipant(chat)
+        if (!otherParticipant) return false
         return (
             otherParticipant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             otherParticipant.email.toLowerCase().includes(searchQuery.toLowerCase())
         )
     })
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!messageInput.trim() || !selectedChat) return
 
-        const newMessage = {
-            id: Date.now().toString(),
-            sender: "admin",
-            content: messageInput,
-            timestamp: new Date().toISOString(),
+        const otherParticipant = getOtherParticipant(selectedChat)
+        if (!otherParticipant) {
+            message.error("Invalid chat participant")
+            return
         }
 
-        const updatedChats = chats.map((chat) => {
-            if (chat.id === selectedChat.id) {
-                return {
-                    ...chat,
-                    messages: [...chat.messages, newMessage],
-                }
-            }
-            return chat
-        })
+        try {
+            const response = await sendMessage(token, {
+                recipientId: otherParticipant._id,
+                content: messageInput,
+            })
 
-        setChats(updatedChats)
-        setSelectedChat({
-            ...selectedChat,
-            messages: [...selectedChat.messages, newMessage],
-        })
-        setMessageInput("")
+            setChats((prevChats) => prevChats.map((chat) => (chat._id === response._id ? response : chat)))
+            setSelectedChat(response)
+            setMessageInput("")
+        } catch (error) {
+            message.error(error.message || "Failed to send message")
+            console.error("Send message error:", error)
+        }
     }
 
     return (
-        <div>
-            <h2 className="text-xl font-semibold mb-4">Chats</h2>
+        <div className="max-w-7xl mx-auto">
+            <h2 className="text-xl font-medium mb-4">Conversations</h2>
 
-            <Row gutter={16}>
-                <Col xs={24} md={8}>
-                    <Card className="h-[70vh] flex flex-col">
-                        <Search
-                            placeholder="Search conversations"
-                            className="mb-4"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <div className="overflow-auto flex-1">
-                            {filteredChats.length > 0 ? (
-                                <List
-                                    dataSource={filteredChats}
-                                    renderItem={(chat) => {
-                                        const otherParticipant = getOtherParticipant(chat)
-                                        const lastMessage = getLastMessage(chat)
-
-                                        return (
-                                            <List.Item
-                                                onClick={() => setSelectedChat(chat)}
-                                                className={`cursor-pointer hover:bg-gray-50 ${selectedChat?.id === chat.id ? "bg-gray-100" : ""}`}
-                                            >
-                                                <List.Item.Meta
-                                                    avatar={<Avatar icon={<UserOutlined />} />}
-                                                    title={
-                                                        <div className="flex justify-between">
-                                                            <span>{otherParticipant.name}</span>
-                                                            {lastMessage && (
-                                                                <Text type="secondary" className="text-xs">
-                                                                    {new Date(lastMessage.timestamp).toLocaleDateString()}
-                                                                </Text>
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    description={
-                                                        <div className="flex justify-between items-center">
-                                                            {lastMessage && (
-                                                                <Text ellipsis className="max-w-[150px]">
-                                                                    {lastMessage.content}
-                                                                </Text>
-                                                            )}
-                                                            {lastMessage && lastMessage.sender !== "admin" && (
-                                                                <div className="w-2 h-2 rounded-full bg-green-700"></div>
-                                                            )}
-                                                        </div>
-                                                    }
-                                                />
-                                            </List.Item>
-                                        )
-                                    }}
-                                />
-                            ) : (
-                                <Empty description="No conversations found" />
-                            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Chat List */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="p-3 border-b">
+                        <div className="relative">
+                            <Input
+                                placeholder="Search conversations"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                prefix={<SearchOutlined className="text-gray-400" />}
+                                className="rounded-full bg-gray-50"
+                                allowClear
+                            />
                         </div>
-                    </Card>
-                </Col>
+                    </div>
 
-                <Col xs={24} md={16}>
-                    <Card className="h-[70vh] flex flex-col">
-                        {selectedChat ? (
-                            <>
-                                <div className="border-b pb-2 mb-4">
-                                    <div className="flex items-center">
-                                        <Avatar icon={<UserOutlined />} />
-                                        <div className="ml-2">
-                                            <div className="font-medium">{getOtherParticipant(selectedChat).name}</div>
-                                            <div className="text-xs text-gray-500">{getOtherParticipant(selectedChat).email}</div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div className="h-[calc(70vh-80px)] overflow-auto">
+                        {loading ? (
+                            <div className="flex justify-center items-center h-40">
+                                <Spin />
+                            </div>
+                        ) : filteredChats.length > 0 ? (
+                            <div className="divide-y">
+                                {filteredChats.map((chat) => {
+                                    const otherParticipant = getOtherParticipant(chat)
+                                    const lastMessage = getLastMessage(chat)
+                                    const isSelected = selectedChat?._id === chat._id
 
-                                <div className="flex-1 overflow-auto mb-4">
-                                    {selectedChat.messages.map((message) => (
+                                    return (
                                         <div
-                                            key={message.id}
-                                            className={`mb-4 flex ${message.sender === "admin" ? "justify-end" : "justify-start"}`}
+                                            key={chat._id}
+                                            onClick={() => setSelectedChat(chat)}
+                                            className={`p-3 cursor-pointer transition-colors ${isSelected ? "bg-gray-100" : "hover:bg-gray-50"
+                                                }`}
                                         >
-                                            <div
-                                                className={`max-w-[70%] rounded-lg p-3 ${message.sender === "admin" ? "bg-green-700 text-white" : "bg-gray-100"
-                                                    }`}
-                                            >
-                                                <div>{message.content}</div>
-                                                <div
-                                                    className={`text-xs mt-1 ${message.sender === "admin" ? "text-green-100" : "text-gray-500"}`}
-                                                >
-                                                    {formatDate(message.timestamp)}
+                                            <div className="flex items-center space-x-3">
+                                                <Avatar icon={<UserOutlined />} className={isSelected ? "bg-blue-500" : ""} />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="font-medium text-gray-900 truncate">{otherParticipant.name}</p>
+                                                        {lastMessage && (
+                                                            <span className="text-xs text-gray-500">
+                                                                {new Date(lastMessage.timestamp).toLocaleDateString()}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {lastMessage && <p className="text-sm text-gray-500 truncate">{lastMessage.content}</p>}
                                                 </div>
+                                                {lastMessage && lastMessage.sender._id !== localStorage.getItem("userId") && (
+                                                    <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
+                                                )}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-auto">
-                                    <Input.Group compact>
-                                        <Input
-                                            value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
-                                            onPressEnter={handleSendMessage}
-                                            placeholder="Type a message..."
-                                            style={{ width: "calc(100% - 40px)" }}
-                                        />
-                                        <Button
-                                            type="primary"
-                                            icon={<SendOutlined />}
-                                            onClick={handleSendMessage}
-                                            style={{ width: "40px", backgroundColor: "#eab308" }}
-                                        />
-                                    </Input.Group>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-gray-400">
-                                Select a conversation to start chatting
+                                    )
+                                })}
                             </div>
+                        ) : (
+                            <Empty description="No conversations found" className="my-10" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                         )}
-                    </Card>
-                </Col>
-            </Row>
+                    </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="md:col-span-2 bg-white rounded-lg shadow-sm overflow-hidden flex flex-col h-[70vh]">
+                    {selectedChat ? (
+                        <>
+                            <div className="p-3 border-b">
+                                <div className="flex items-center">
+                                    <Avatar icon={<UserOutlined />} />
+                                    <div className="ml-3">
+                                        <p className="font-medium">{getOtherParticipant(selectedChat).name}</p>
+                                        <p className="text-xs text-gray-500">{getOtherParticipant(selectedChat).email}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-auto p-4 bg-gray-50">
+                                {selectedChat.messages.map((message) => {
+                                    // Get the current user ID from localStorage
+                                    const currentUserId = localStorage.getItem("userId")
+
+                                    // Log the IDs for debugging
+                                    console.log("Message sender:", message.sender)
+                                    console.log("Current user ID:", currentUserId)
+
+                                    // Check multiple possible ID properties and formats
+                                    const isCurrentUser =
+                                        (message.sender._id && message.sender._id === currentUserId) ||
+                                        (message.sender.id && message.sender.id === currentUserId) ||
+                                        // If the sender is just the ID itself
+                                        (typeof message.sender === "string" && message.sender === currentUserId)
+
+                                    console.log("Is current user message:", isCurrentUser)
+
+                                    return (
+                                        <div key={message._id} className={`mb-4 flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                                            <div
+                                                className={`max-w-[70%] rounded-lg p-3 ${isCurrentUser ? "bg-blue-500 text-white" : "bg-white shadow-sm"
+                                                    }`}
+                                            >
+                                                <p>{message.content}</p>
+                                                <p className={`text-xs mt-1 ${isCurrentUser ? "text-blue-100" : "text-gray-400"}`}>
+                                                    {formatDate(message.timestamp)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            <div className="p-3 border-t bg-white">
+                                <div className="flex space-x-2">
+                                    <Input
+                                        value={messageInput}
+                                        onChange={(e) => setMessageInput(e.target.value)}
+                                        onPressEnter={handleSendMessage}
+                                        placeholder="Type a message..."
+                                        className="rounded-full bg-gray-50"
+                                        disabled={loading}
+                                    />
+                                    <Button
+                                        type="primary"
+                                        icon={<SendOutlined />}
+                                        onClick={handleSendMessage}
+                                        disabled={loading || !messageInput.trim()}
+                                        className="rounded-full flex items-center justify-center"
+                                        style={{ backgroundColor: "#3b82f6" }}
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-400 bg-gray-50">
+                            <div className="text-center">
+                                <p>Select a conversation to start chatting</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { message } from "antd";
 import { jwtDecode } from "jwt-decode";
-import { register, login as apiLogin } from "../../api/";
+import { register, login as apiLogin } from "../../api";
 
 const AuthContext = createContext({
     isAuthenticated: false,
@@ -90,21 +90,20 @@ export const AuthProvider = ({ children }) => {
         try {
             console.log("login: Logging in with:", { email });
             const data = await apiLogin({ email, password });
-            console.log("login: Full API response:", data); // Log full response
+            console.log("login: Full API response:", data);
             if (!data?.token) {
                 throw new Error("No token in response");
             }
-            // Handle different possible role fields and case sensitivity
             const role = data.user?.role;
             if (!role) {
                 throw new Error("No role found in response");
             }
-            const normalizedRole = role.toLowerCase(); // Normalize role to lowercase
+            const normalizedRole = role.toLowerCase();
             localStorage.setItem("token", data.token);
             localStorage.setItem("userRole", normalizedRole);
             console.log("login: Stored token:", data.token.slice(0, 20) + "...", "Stored role:", normalizedRole);
             initializeAuth();
-            return { success: true, role: normalizedRole }; // Return normalized role
+            return { success: true, role: normalizedRole };
         } catch (error) {
             console.error("login: Login error:", error.message);
             message.error(error.message || "Failed to log in");

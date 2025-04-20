@@ -2,10 +2,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 export const login = async (credentials) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     try {
-        console.log("Login request to:", `${API_URL}/auth/login`, "Credentials:", credentials);
+        console.log("Login request to:", `${API_URL}/auth/login`, "Credentials:", {
+            email: credentials.email,
+            password: credentials.password,
+        });
         const response = await fetch(`${API_URL}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -31,7 +34,7 @@ export const login = async (credentials) => {
             throw new Error("Invalid response: Missing token or user data");
         }
 
-        return responseBody; // { token, user: { id, email, name, role } }
+        return responseBody;
     } catch (error) {
         console.error("Login fetch error:", error);
         if (error.name === "AbortError") {
@@ -44,6 +47,7 @@ export const login = async (credentials) => {
 export const register = async (userData) => {
     console.log(`Attempting registration to ${API_URL}/auth/register`);
     try {
+        console.log("Register request data:", Array.from(userData.entries()));
         const response = await fetch(`${API_URL}/auth/register`, {
             method: "POST",
             body: userData,

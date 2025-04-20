@@ -15,9 +15,11 @@ const LoginPage = () => {
         setError('');
         setIsLoading(true);
 
+        const normalizedEmail = email.toLowerCase();
+        console.log("Submitting login credentials:", { email: normalizedEmail, password });
+
         try {
-            console.log("Attempting login with:", { email });
-            const response = await login(email, password);
+            const response = await login(normalizedEmail, password);
             console.log("Login response:", response);
             if (response.success) {
                 console.log("Login successful, role:", response.role);
@@ -123,7 +125,9 @@ const LoginPage = () => {
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
                     Don't have an account?{' '}
-                    <a className="font-medium text-green-600 hover:text-green-500" onClick={handleSignupClick}> Signup</a>
+                    <a className="font-medium text-green-600 hover:text-green-500" onClick={handleSignupClick}>
+                        Signup
+                    </a>
                 </p>
             </div>
         </div>

@@ -19,15 +19,13 @@ const SignupPage = () => {
 
     console.log("Rendering SignupPage", { isAuthenticated, path: window.location.pathname });
 
-    // Optional: Redirect authenticated users (uncomment to enable)
-    /*
+    // Redirect authenticated users
     useEffect(() => {
         if (isAuthenticated) {
-            console.log("Redirecting authenticated user from /signup to /chats");
-            navigate("/chats");
+            console.log("Redirecting authenticated user from /signup to /");
+            navigate('/');
         }
     }, [isAuthenticated, navigate]);
-    */
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -56,7 +54,7 @@ const SignupPage = () => {
         try {
             const formData = new FormData();
             formData.append('name', name);
-            formData.append('email', email);
+            formData.append('email', email.toLowerCase()); // Normalize email
             formData.append('password', password);
             formData.append('address', address);
             formData.append('mobileNumber', mobileNumber);
@@ -230,18 +228,6 @@ const SignupPage = () => {
                             Upload Profile Picture
                         </Button>
                     </Upload>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                            if (e.target.files[0]) {
-                                setFileList([{ originFileObj: e.target.files[0], uid: '-1', name: e.target.files[0].name }]);
-                                console.log('Selected file (native input):', e.target.files[0]);
-                            }
-                        }}
-                        disabled={isLoading}
-                        className="mt-2"
-                    />
                 </div>
 
                 <div className="flex items-center">

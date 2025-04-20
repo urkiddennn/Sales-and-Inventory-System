@@ -17,10 +17,17 @@ const LoginPage = () => {
 
         try {
             console.log("Attempting login with:", { email });
-            const success = await login(email, password);
-            if (success) {
-                console.log("Login successful, navigating to /");
-                navigate('/');
+            const response = await login(email, password);
+            console.log("Login response:", response);
+            if (response.success) {
+                console.log("Login successful, role:", response.role);
+                if (response.role === 'admin') {
+                    console.log("Admin role detected, navigating to /admin");
+                    navigate('/admin');
+                } else {
+                    console.log("Non-admin role, navigating to /");
+                    navigate('/');
+                }
             } else {
                 setError('Invalid email or password');
                 console.log("Login failed: Invalid credentials");
@@ -36,7 +43,7 @@ const LoginPage = () => {
 
     const handleSignupClick = () => {
         console.log("Signup link clicked, navigating to /signup");
-        navigate("/signup")
+        navigate("/signup");
     };
 
     return (

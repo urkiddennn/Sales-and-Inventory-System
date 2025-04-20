@@ -1,68 +1,76 @@
-"use client"
+// src/components/OrderList.jsx
+"use client";
 
-import React, { useState, useMemo } from "react" // Import useMemo
-// Import Input and Select components
-import { Table, Button, Space, Popconfirm, message, Tag, Input, Select } from "antd"
-import { EyeOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons"
-import { useNavigate } from "react-router-dom"
+import React, { useState, useMemo, useEffect } from "react";
+import { Table, Button, Space, Popconfirm, message, Tag, Input, Select } from "antd";
+import { EyeOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { getOrders, updateOrderStatus, deleteOrder } from "../../api";
 
-// Define status options based on your model's enum
+const { Option } = Select;
+
 const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 const OrderList = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const [orders, setOrders] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // --- State ---
-    const [orders, setOrders] = useState([
-        // Your existing sample data with 'status' included...
-        { id: "1", products: [{ product: { id: "1", name: "Product A" }, quantity: 2, price: 29.99 }, { product: { id: "3", name: "Product C" }, quantity: 1, price: 19.99 },], total: 79.97, user: { id: "2", name: "Jane Smith", email: "jane@example.com" }, status: 'delivered', createdAt: "2023-09-15T10:30:00Z" },
-        { id: "2", products: [{ product: { id: "2", name: "Product B" }, quantity: 1, price: 49.99 }], total: 49.99, user: { id: "1", name: "John Doe", email: "john@example.com" }, status: 'shipped', createdAt: "2023-09-14T15:45:00Z" },
-        { id: "3", products: [{ product: { id: "4", name: "Product D" }, quantity: 3, price: 39.99 }, { product: { id: "1", name: "Product A" }, quantity: 1, price: 29.99 },], total: 149.96, user: { id: "3", name: "Bob Johnson", email: "bob@example.com" }, status: 'pending', createdAt: "2023-09-13T09:15:00Z" },
-        { id: "4", products: [{ product: { id: "5", name: "Product E" }, quantity: 5, price: 9.99 }], total: 49.95, user: { id: "2", name: "Jane Smith", email: "jane@example.com" }, status: 'processing', createdAt: "2023-09-16T11:00:00Z" },
-        { id: "5", products: [{ product: { id: "6", name: "Product F" }, quantity: 1, price: 99.99 }], total: 99.99, user: { id: "4", name: "Alice Brown", email: "alice@example.com" }, status: 'cancelled', createdAt: "2023-09-17T14:20:00Z" },
-    ]);
-    const [searchTerm, setSearchTerm] = useState(''); // State for search input
+    const token = localStorage.getItem("token"); // Adjust based on your auth setup
 
-    // --- Handlers ---
-    const deleteOrder = (id) => {
-        // In a real app, you'd call an API here first
-        setOrders(prevOrders => prevOrders.filter((order) => order.id !== id));
-        message.success("Order deleted successfully (locally)");
+    // Fetch orders on mount
+    useEffect(() => {
+        if (!token) {
+            message.error("Please log in to view orders");
+            navigate("/login");
+            return;
+        }
+
+        const fetchOrders = async () => {
+            setLoading(true);
+            try {
+                const fetchedOrders = await getOrders(token);
+                setOrders(fetchedOrders);
+            } catch (error) {
+                console.error("Failed to fetch orders:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOrders();
+    }, [token, navigate]);
+
+    const handleStatusChange = async (orderId, newStatus) => {
+        try {
+            const updatedOrder = await updateOrderStatus(token, orderId, { status: newStatus });
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order._id === orderId ? { ...order, status: updatedOrder.status } : order
+                )
+            );
+            message.success(`Order ${orderId} status updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Failed to update order status:", error);
+        }
+    };
+
+    const handleDeleteOrder = async (orderId) => {
+        try {
+            await deleteOrder(token, orderId);
+            setOrders(prevOrders => prevOrders.filter(order => order._id !== orderId));
+            message.success("Order deleted successfully");
+        } catch (error) {
+            console.error("Failed to delete order:", error);
+        }
     };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleString(); // Adjust formatting as needed
+        return date.toLocaleString();
     };
 
-    // Handler to update status in local state
-    const handleStatusChange = (orderId, newStatus) => {
-        // In a real app, you'd call an API here first to update the backend
-        setOrders(prevOrders =>
-            prevOrders.map(order =>
-                order.id === orderId ? { ...order, status: newStatus } : order
-            )
-        );
-        message.success(`Order ${orderId} status updated to ${newStatus} (locally)`);
-    };
-
-    // --- Filtering Logic ---
-    // Use useMemo to avoid recalculating on every render unless orders or searchTerm change
-    const filteredOrders = useMemo(() => {
-        if (!searchTerm) {
-            return orders; // No search term, return all orders
-        }
-        const lowerCaseSearchTerm = searchTerm.toLowerCase();
-        return orders.filter(order =>
-            order.id.toLowerCase().includes(lowerCaseSearchTerm) ||
-            order.user.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-            order.user.email.toLowerCase().includes(lowerCaseSearchTerm)
-            // Add more fields to search if needed (e.g., product names)
-        );
-    }, [orders, searchTerm]); // Dependencies for useMemo
-
-    // --- Column Definitions ---
-    const getStatusColor = (status) => { /* ... (same as before) ... */
+    const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'orange';
             case 'processing': return 'blue';
@@ -73,8 +81,28 @@ const OrderList = () => {
         }
     };
 
+    const filteredOrders = useMemo(() => {
+        if (!searchTerm) return orders;
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        return orders.filter(order =>
+            order._id.toLowerCase().includes(lowerCaseSearchTerm) ||
+            order.user.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+            order.user.email.toLowerCase().includes(lowerCaseSearchTerm) ||
+            order.products.some(item =>
+                item.product.name.toLowerCase().includes(lowerCaseSearchTerm)
+            )
+        );
+    }, [orders, searchTerm]);
+
     const columns = [
-        { title: "Order ID", dataIndex: "id", key: "id", width: 100, sorter: (a, b) => a.id.localeCompare(b.id) },
+        {
+            title: "Order ID",
+            dataIndex: "_id",
+            key: "_id",
+            width: 100,
+            render: (id) => id.slice(0, 8),
+            sorter: (a, b) => a._id.localeCompare(b._id),
+        },
         {
             title: "Customer",
             key: "user",
@@ -89,7 +117,7 @@ const OrderList = () => {
         {
             title: "Products",
             key: "products",
-            render: (_, record) => ( /* ... (same as before) ... */
+            render: (_, record) => (
                 <div>
                     {record.products.map((item, index) => (
                         <div key={index}>
@@ -99,51 +127,76 @@ const OrderList = () => {
                 </div>
             ),
         },
-        { title: "Total", dataIndex: "total", key: "total", render: (total) => `$${total.toFixed(2)}`, sorter: (a, b) => a.total - b.total },
+        {
+            title: "Total",
+            dataIndex: "total",
+            key: "total",
+            render: (total) => `$${total.toFixed(2)}`,
+            sorter: (a, b) => a.total - b.total,
+        },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            // Use Select for editing status
             render: (status, record) => (
                 <Select
                     value={status}
                     style={{ width: 120 }}
-                    onChange={(newStatus) => handleStatusChange(record.id, newStatus)}
-                    onClick={(e) => e.stopPropagation()} // Prevent row click triggers if any
+                    onChange={(newStatus) => handleStatusChange(record._id, newStatus)}
+                    onClick={(e) => e.stopPropagation()}
                 >
                     {STATUS_OPTIONS.map(option => (
-                        <Select.Option key={option} value={option}>
-                            <Tag color={getStatusColor(option)} style={{ marginRight: 0 }}> {/* Show tag inside option for consistency */}
+                        <Option key={option} value={option}>
+                            <Tag color={getStatusColor(option)} style={{ marginRight: 0 }}>
                                 {option.charAt(0).toUpperCase() + option.slice(1)}
                             </Tag>
-                        </Select.Option>
+                        </Option>
                     ))}
                 </Select>
             ),
-            // Optional: Add filters for status
             filters: STATUS_OPTIONS.map(s => ({ text: s.charAt(0).toUpperCase() + s.slice(1), value: s })),
             onFilter: (value, record) => record.status === value,
         },
-        { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (date) => formatDate(date), sorter: (a, b) => new Date(b.createdAt) - new Date(a.createdAt), defaultSortOrder: 'descend' },
+        {
+            title: "Date",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            render: (date) => formatDate(date),
+            sorter: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+            defaultSortOrder: 'descend',
+        },
         {
             title: "Actions",
             key: "actions",
             render: (_, record) => (
                 <Space size="middle">
-                    <Button type="link" icon={<EyeOutlined />} onClick={(e) => { e.stopPropagation(); navigate(`/admin/order/${record.id}`); }}>
+                    <Button
+                        type="link"
+                        icon={<EyeOutlined />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/order/${record._id}`);
+                        }}
+                    >
                         View
                     </Button>
                     <Popconfirm
                         title="Are you sure you want to delete this order?"
-                        onConfirm={(e) => { e.stopPropagation(); deleteOrder(record.id); }}
-                        onCancel={(e) => e.stopPropagation()} // Prevent row click if cancel is clicked
+                        onConfirm={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOrder(record._id);
+                        }}
+                        onCancel={(e) => e.stopPropagation()}
                         okText="Yes"
                         cancelText="No"
                         okButtonProps={{ style: { backgroundColor: "#ef4444" } }}
                     >
-                        {/* Stop propagation here too, otherwise clicking delete triggers Popconfirm AND Select change sometimes */}
-                        <Button type="link" danger icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()}>
+                        <Button
+                            type="link"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             Delete
                         </Button>
                     </Popconfirm>
@@ -152,32 +205,30 @@ const OrderList = () => {
         },
     ];
 
-    // --- Render ---
     return (
         <div>
             <div className="flex justify-between items-center mb-4 gap-4">
                 <h2 className="text-xl font-semibold whitespace-nowrap">Orders</h2>
-                {/* Search Input */}
                 <Input
-                    placeholder="Search by Order ID, Customer Name/Email"
+                    placeholder="Search by Order ID, Customer Name/Email, or Product Name"
                     prefix={<SearchOutlined />}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ width: '100%', maxWidth: '400px' }}
-                    allowClear // Allow clearing the search
+                    allowClear
                 />
             </div>
 
             <Table
                 columns={columns}
-                // Use the filtered data source
                 dataSource={filteredOrders}
-                rowKey="id"
+                rowKey="_id"
                 pagination={{ pageSize: 10 }}
-                scroll={{ x: 900 }} // Adjust scroll width if needed
+                scroll={{ x: 900 }}
+                loading={loading}
             />
         </div>
     );
-}
+};
 
 export default OrderList;

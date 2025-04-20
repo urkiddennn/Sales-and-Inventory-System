@@ -27,17 +27,21 @@ import ChatPage from "./components/chat/ChatPage";
 
 // Public route component
 const PublicRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated, loading, userRole } = useAuth();
     const location = useLocation();
-    console.log("PublicRoute:", { isAuthenticated, loading, path: location.pathname });
+    console.log("PublicRoute:", { isAuthenticated, userRole, loading, path: location.pathname });
 
     if (loading) {
         return <div className="text-center py-12">Loading...</div>;
     }
 
-    // Redirect authenticated users from /login and /signup to /
+    // Only redirect authenticated users from /login or /signup if they are not admins
     if (isAuthenticated && ["/login", "/signup"].includes(location.pathname)) {
-        console.log("PublicRoute: Redirecting authenticated user to / from", location.pathname);
+        if (userRole === "admin") {
+            console.log("PublicRoute: Admin user detected, allowing LoginPage to handle navigation");
+            return children; // Let LoginPage handle navigation to /admin
+        }
+        console.log("PublicRoute: Redirecting authenticated non-admin user to / from", location.pathname);
         return <Navigate to="/" replace />;
     }
 

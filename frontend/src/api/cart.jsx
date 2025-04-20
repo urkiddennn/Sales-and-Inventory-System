@@ -187,3 +187,71 @@ export const cancelOrder = async (token, orderId) => {
         throw error;
     }
 };
+export const fetchOrderById = async (token, orderId) => {
+    try {
+        console.log('Fetching order from:', `${API_URL}/orders/${orderId}`, { token });
+        const response = await fetch(`${API_URL}/orders/${orderId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch order');
+        }
+        return response.json();
+    } catch (error) {
+        message.error(error.message || 'An unexpected error occurred');
+        throw error;
+    }
+};
+export const updateOrderStatus = async (token, orderId, statusData) => {
+    try {
+        console.log('Updating order status:', { orderId, statusData, url: `${API_URL}/orders/${orderId}/status`, token });
+        const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(statusData),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Update order status error response:', { status: response.status, errorData });
+            if (response.status === 401) {
+                throw new Error('Unauthorized: Please log in again');
+            }
+            throw new Error(errorData.message || 'Failed to update order status');
+        }
+        return response.json();
+    } catch (error) {
+        console.error('Update order status error:', error);
+        message.error(error.message || 'An unexpected error occurred');
+        throw error;
+    }
+};
+export const deleteOrder = async (token, orderId) => {
+    try {
+        console.log('Deleting order:', { orderId, url: `${API_URL}/orders/${orderId}`, token });
+        const response = await fetch(`${API_URL}/orders/${orderId}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Delete order error response:', { status: response.status, errorData });
+            if (response.status === 401) {
+                throw new Error('Unauthorized: Please log in again');
+            }
+            throw new Error(errorData.error || 'Failed to delete order');
+        }
+        return response.json();
+    } catch (error) {
+        console.error('Delete order error:', error);
+        message.error(error.message || 'An unexpected error occurred');
+        throw error;
+    }
+};

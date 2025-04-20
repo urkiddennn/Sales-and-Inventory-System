@@ -64,3 +64,48 @@ export const cancelOrder = async (c: Context) => {
   await order.save();
   return c.json(order);
 };
+export const getOrderById = async (c: Context) => {
+    try {
+        const { id } = c.req.param();
+        const userId = c.get('jwtPayload').id;
+        const role = c.get('jwtPayload').role;
+
+        const order = await Order.findById(id).populate('products.product').populate('user');
+        if (!order) {
+            return c.json({ error: 'Order not found' }, 404);
+        }
+
+        // Only allow access to the order's owner or an admin
+        if (order.user._id.toString() !== userId && role !== 'admin') {
+            return c.json({ error: 'Unauthorized to view this order' }, 403);
+        }
+
+        return c.json(order);
+    } catch (error: unknown) {
+        console.error('Error fetching order by ID:', error);
+        return c.json({ error: 'Internal server error' }, 500);
+    }
+};
+export const deleteOrder = async (c: Context) => {
+    try {
+        const { id } = c.req.param();
+        const userId = c.get('jwtPayload').id;
+        const role = c.get('jwtPayload').role;
+
+        const order = await Order.findById(id);
+        if (!order) {
+            return c.json({ error: 'Order not found' }, 404);
+        }
+
+        // Only allow deletion by the order's owner or an admin
+        if (order.user.toString() !== userId && role !== 'admin') {
+            return c.json({ error: 'Unauthorized to delete this order' }, 403);
+        }
+
+        await Order.findByIdAndDelete(id);
+        return c.json({ message: 'Order deleted successfully' });
+    } catch (error: unknown) {
+        console.error('Error deleting order:', error);
+        return c.json({ error: 'Internal server error' }, 500);
+    }
+};

@@ -8,8 +8,9 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   address: { type: String, required: true },
   mobileNumber: { type: String, required: true },
-  profileUrl: { type: String, default: "" }, // Ensure default
+  profileUrl: { type: String, default: "" }, // Ensure defaulta
   role: { type: String, enum: ["admin", "user"], default: "user" },
+  active: { type: Boolean, default: true }, // Add active field
 });
 
 userSchema.pre("save", async function (next) {

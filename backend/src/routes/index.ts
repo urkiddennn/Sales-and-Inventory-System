@@ -53,6 +53,8 @@ app.post('/orders', orderController.createOrder);
 app.get('/orders', orderController.getOrders);
 app.patch('/orders/:id/status', orderController.updateOrderStatus);
 app.post('/orders/:id/cancel', orderController.cancelOrder); // New cancel route
+app.get('/orders/:id', authMiddleware, orderController.getOrderById);
+app.delete('/orders/:id', authMiddleware, orderController.deleteOrder); // New route
 
 // Sale routes
 app.post('/sales', saleController.createSale);
@@ -78,6 +80,8 @@ app.get('/users', userController.getUser); // Matches Profile component
 app.put('/users/:id', userController.editUser);
 app.delete('/users/:id', userController.deleteUser);
 app.get("/users/admin", userController.getAdminUser);
+app.get('/getAllUsers', userController.getAllUsers)
+app.get('/users/:id', adminMiddleware, userController.getUserById)
 
 // Details route
 app.post('/details', detailsController.createDetails)

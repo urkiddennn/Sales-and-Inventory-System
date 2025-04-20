@@ -160,3 +160,31 @@ export const getAdminUser = async (c: Context) => {
       return c.json({ error: "Internal server error" }, 500);
     }
 };
+
+//get all users
+export const getAllUsers = async (c: Context)=>{
+    try {
+        const users = await User.find()
+        return c.json(users)
+    } catch (error: any) {
+        return c.json({error: error.message}, 500)
+    }
+}
+export const getUserById = async (c: Context) => {
+    try {
+        const { id } = c.req.param();
+        const role = c.get("jwtPayload").role;
+        if (role !== "admin") {
+            return c.json({ error: "Unauthorized: Admin access required" }, 403);
+        }
+
+        const user = await User.findById(id).select("-password");
+        if (!user) {
+            return c.json({ error: "User not found" }, 404);
+        }
+        return c.json(user);
+    } catch (error: unknown) {
+        console.error("Error fetching user by ID:", error);
+        return c.json({ error: "Internal server error" }, 500);
+    }
+};

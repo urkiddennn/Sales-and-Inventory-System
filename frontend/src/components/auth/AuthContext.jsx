@@ -90,19 +90,25 @@ export const AuthProvider = ({ children }) => {
         try {
             console.log("login: Logging in with:", { email });
             const data = await apiLogin({ email, password });
-            console.log("login: Login response:", data);
-            if (!data?.token || !data?.user?.role) {
-                throw new Error("Invalid response from server");
+            console.log("login: Full API response:", data); // Log full response
+            if (!data?.token) {
+                throw new Error("No token in response");
             }
+            // Handle different possible role fields and case sensitivity
+            const role = data.user?.role;
+            if (!role) {
+                throw new Error("No role found in response");
+            }
+            const normalizedRole = role.toLowerCase(); // Normalize role to lowercase
             localStorage.setItem("token", data.token);
-            localStorage.setItem("userRole", data.user.role);
-            console.log("login: Stored token:", data.token.slice(0, 20) + "...", "Stored role:", data.user.role);
+            localStorage.setItem("userRole", normalizedRole);
+            console.log("login: Stored token:", data.token.slice(0, 20) + "...", "Stored role:", normalizedRole);
             initializeAuth();
-            return true;
+            return { success: true, role: normalizedRole }; // Return normalized role
         } catch (error) {
             console.error("login: Login error:", error.message);
             message.error(error.message || "Failed to log in");
-            return false;
+            return { success: false };
         }
     };
 

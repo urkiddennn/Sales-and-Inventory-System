@@ -1,39 +1,46 @@
-"use client"
+// src/components/Order.jsx
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { Card, Descriptions, Table, Button, Tag } from "antd"
-import { ArrowLeftOutlined, PrinterOutlined } from "@ant-design/icons"
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, Descriptions, Table, Button, Tag, message } from "antd";
+import { ArrowLeftOutlined, PrinterOutlined } from "@ant-design/icons";
+import { fetchOrderById } from "../../api";
 
 const Order = () => {
-    const { id } = useParams()
-    const navigate = useNavigate()
-    const [order, setOrder] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const token = localStorage.getItem("token"); // Adjust based on your auth setup
 
     useEffect(() => {
-        // Simulate fetching order data
-        // In a real app, you would fetch from an API
-        setTimeout(() => {
-            setOrder({
-                id,
-                products: [
-                    { id: "1", product: { id: "1", name: "Product A" }, quantity: 2, price: 29.99 },
-                    { id: "2", product: { id: "3", name: "Product C" }, quantity: 1, price: 19.99 },
-                ],
-                total: 79.97,
-                user: { id: "2", name: "Jane Smith", email: "jane@example.com" },
-                createdAt: "2023-09-15T10:30:00Z",
-                status: "Completed",
-            })
-            setLoading(false)
-        }, 500)
-    }, [id])
+        if (!token) {
+            message.error("Please log in to view order details");
+            navigate("/login");
+            return;
+        }
+
+        const fetchOrder = async () => {
+            setLoading(true);
+            try {
+                const fetchedOrder = await fetchOrderById(token, id);
+                setOrder(fetchedOrder);
+            } catch (error) {
+                message.error(error.message || "Failed to fetch order details");
+                navigate("/admin/orders");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOrder();
+    }, [id, token, navigate]);
 
     const formatDate = (dateString) => {
-        const date = new Date(dateString)
-        return date.toLocaleString()
-    }
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    };
 
     const columns = [
         {
@@ -58,10 +65,14 @@ const Order = () => {
             key: "subtotal",
             render: (_, record) => `$${(record.price * record.quantity).toFixed(2)}`,
         },
-    ]
+    ];
 
     if (loading) {
-        return <div>Loading order details...</div>
+        return <div>Loading order details...</div>;
+    }
+
+    if (!order) {
+        return <div>Order not found</div>;
     }
 
     return (
@@ -74,19 +85,19 @@ const Order = () => {
                         onClick={() => navigate("/admin/orders")}
                         className="mr-2 p-0"
                     />
-                    <h2 className="text-xl font-semibold m-0">Order #{id}</h2>
+                    <h2 className="text-xl font-semibold m-0">Order #{order._id.slice(0, 8)}</h2>
                 </div>
                 <Button icon={<PrinterOutlined />}>Print Invoice</Button>
             </div>
 
             <Card className="mb-4">
                 <Descriptions title="Order Information" bordered>
-                    <Descriptions.Item label="Order ID">{order.id}</Descriptions.Item>
+                    <Descriptions.Item label="Order ID">{order._id}</Descriptions.Item>
                     <Descriptions.Item label="Customer">{order.user.name}</Descriptions.Item>
                     <Descriptions.Item label="Email">{order.user.email}</Descriptions.Item>
                     <Descriptions.Item label="Date">{formatDate(order.createdAt)}</Descriptions.Item>
                     <Descriptions.Item label="Status">
-                        <Tag color="green">{order.status}</Tag>
+                        <Tag color={order.status === 'cancelled' ? 'red' : 'green'}>{order.status}</Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="Total">${order.total.toFixed(2)}</Descriptions.Item>
                 </Descriptions>
@@ -96,7 +107,7 @@ const Order = () => {
                 <Table
                     columns={columns}
                     dataSource={order.products}
-                    rowKey="id"
+                    rowKey={(record) => `${record.product._id}-${record.quantity}`}
                     pagination={false}
                     summary={() => (
                         <Table.Summary>
@@ -113,7 +124,7 @@ const Order = () => {
                 />
             </Card>
         </div>
-    )
-}
+    );
+};
 
-export default Order
+export default Order;

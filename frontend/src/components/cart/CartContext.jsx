@@ -11,6 +11,8 @@ export const CartProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [cart, setCart] = useState({ items: [] });
 
+
+
     useEffect(() => {
         console.log("CartProvider: useEffect running, isAuthenticated:", isAuthenticated);
         if (isAuthenticated) {

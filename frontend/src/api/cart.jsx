@@ -1,8 +1,9 @@
+
 import { message } from 'antd';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-// Cart APIs (unchanged from your original)
+// Cart APIs
 export const addToCart = async (token, cartData) => {
     try {
         console.log('Adding to cart:', cartData);
@@ -49,7 +50,7 @@ export const removeFromCart = async (token, productId) => {
 
 export const getCart = async (token) => {
     try {
-        console.log('Fetching cart from:', `${API_URL}/cart`);
+        console.log('Fetching cart from:', `${API_URL}/cart`, { token });
         const response = await fetch(`${API_URL}/cart`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -87,9 +88,10 @@ export const updateCart = async (token, productId, quantity) => {
         throw error;
     }
 };
+
 export const clearCart = async (token) => {
     try {
-        console.log('Clearing cart');
+        console.log('Clearing cart', { token });
         const response = await fetch(`${API_URL}/cart`, {
             method: 'DELETE',
             headers: {
@@ -114,7 +116,7 @@ export const clearCart = async (token) => {
 // Order APIs
 export const createOrder = async (token, orderData) => {
     try {
-        console.log('Creating order:', orderData);
+        console.log('Creating order:', orderData, { token });
         const response = await fetch(`${API_URL}/orders`, {
             method: 'POST',
             headers: {
@@ -136,7 +138,7 @@ export const createOrder = async (token, orderData) => {
 
 export const getOrders = async (token) => {
     try {
-        console.log('Fetching orders from:', `${API_URL}/orders`);
+        console.log('Fetching orders from:', `${API_URL}/orders`, { token });
         const response = await fetch(`${API_URL}/orders`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -144,10 +146,43 @@ export const getOrders = async (token) => {
         });
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Get orders error response:', { status: response.status, errorData });
+            if (response.status === 401) {
+                throw new Error('Unauthorized: Please log in again');
+            }
             throw new Error(errorData.message || 'Failed to fetch orders');
         }
         return response.json();
     } catch (error) {
+        console.error('Get orders error:', error);
+        message.error(error.message || 'An unexpected error occurred');
+        throw error;
+    }
+};
+
+export const cancelOrder = async (token, orderId) => {
+    try {
+        console.log('Cancelling order:', { orderId, url: `${API_URL}/orders/${orderId}/cancel`, token });
+        const response = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Cancel order error response:', { status: response.status, errorData });
+            if (response.status === 401) {
+                throw new Error('Unauthorized: Please log in again');
+            }
+            throw new Error(errorData.message || 'Failed to cancel order');
+        }
+        const data = await response.json();
+        console.log('Cancel order success response:', data);
+        return data;
+    } catch (error) {
+        console.error('Cancel order error:', error);
         message.error(error.message || 'An unexpected error occurred');
         throw error;
     }

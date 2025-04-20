@@ -1,4 +1,4 @@
-// src/controllers/orderController.ts
+
 import { Context } from 'hono';
 import { Order } from '../model/Order';
 import { Product } from '../model/Product';
@@ -39,6 +39,28 @@ export const updateOrderStatus = async (c: Context) => {
   if (!order) return c.json({ error: 'Order not found' }, 404);
 
   order.status = status;
+  await order.save();
+  return c.json(order);
+};
+
+export const cancelOrder = async (c: Context) => {
+  const { id } = c.req.param();
+  const userId = c.get('jwtPayload').id;
+  const role = c.get('jwtPayload').role;
+
+  const order = await Order.findById(id);
+  if (!order) return c.json({ error: 'Order not found' }, 404);
+
+  // Only allow cancellation by the order's owner or an admin
+  if (order.user.toString() !== userId && role !== 'admin') {
+    return c.json({ error: 'Unauthorized to cancel this order' }, 403);
+  }
+
+  if (order.status === 'cancelled') {
+    return c.json({ error: 'Order is already cancelled' }, 400);
+  }
+
+  order.status = 'cancelled';
   await order.save();
   return c.json(order);
 };

@@ -49,9 +49,10 @@ app.get("/products/sale", productController.getSaleProducts); // Fetch sale prod
 app.patch("/products/:id/sale", authMiddleware, productController.updateSaleStatus); // Update sale status
 
 // Admin-only routes (require authentication + admin role)
-app.post("/products", authMiddleware, adminMiddleware, productController.createProduct); // Create a product
-app.put("/products/:id", authMiddleware, adminMiddleware, productController.updateProduct); // Update a product
-app.delete("/products/:id", authMiddleware, adminMiddleware, productController.deleteProduct); //
+app.post('/orders', orderController.createOrder);
+app.get('/orders', orderController.getOrders);
+app.patch('/orders/:id/status', orderController.updateOrderStatus);
+app.post('/orders/:id/cancel', orderController.cancelOrder); // New cancel route
 
 // Sale routes
 app.post('/sales', saleController.createSale);

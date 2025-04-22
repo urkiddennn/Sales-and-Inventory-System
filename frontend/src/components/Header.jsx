@@ -79,9 +79,7 @@ const Header = ({ onCartClick }) => {
                             <Link to="/profile" onClick={() => handleLinkClick('/profile')}>
                                 <FaUser size="1.5em" className="text-gray-800" />
                             </Link>
-                            <button onClick={handleLogout} className="hover:underline">
-                                Logout
-                            </button>
+
                         </>
                     ) : (
                         <>
@@ -104,12 +102,8 @@ const Header = ({ onCartClick }) => {
                 </div>
 
                 <div className="flex lg:hidden space-x-2 items-center">
-                    <button>
-                        <IoMdSearch size="1.5em" className="text-gray-800" />
-                    </button>
-                    <button onClick={onCartClick}>
-                        <TiShoppingCart size="1.5em" className="text-gray-800" />
-                    </button>
+
+
                     {isAuthenticated ? (
                         <>
                             <Link to="/chats" onClick={() => handleLinkClick('/chats')}>
@@ -118,9 +112,7 @@ const Header = ({ onCartClick }) => {
                             <Link to="/profile" onClick={() => handleLinkClick('/profile')}>
                                 <FaUser size="1.5em" className="text-gray-800" />
                             </Link>
-                            <button onClick={handleLogout} className="hover:underline">
-                                Logout
-                            </button>
+
                         </>
                     ) : (
                         <>

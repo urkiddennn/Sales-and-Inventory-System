@@ -44,9 +44,11 @@ app.get('/comments/:productId', authMiddleware, commentController.getProductComm
 app.get("/products", productController.getProducts); // Fetch all products
 app.get("/products/:id", productController.getProductById); // Fetch a single product by ID
 app.get("/products/sale", productController.getSaleProducts); // Fetch sale products
-
+app.post("/products", productController.createProduct)
+app.delete("/products/:id", productController.deleteProduct)
+app.put("/products/:id", productController.updateProduct)
 // Protected routes (require authentication)
-app.put("/products/:id/sale", authMiddleware, productController.updateSaleStatus); // Update sale status
+app.put("/products/:id/sale", productController.updateSaleStatus); // Update sale status
 
 // Admin-only routes (require authentication + admin role)
 app.post('/orders', orderController.createOrder);

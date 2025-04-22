@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getAllComments } from '../api/';
-import { message } from 'antd';
+import { getAllComments } from '../api';
+import { message, Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 
 const Reviews = () => {
     const [reviews, setReviews] = useState([]);
@@ -10,13 +11,9 @@ const Reviews = () => {
         const loadReviews = async () => {
             setLoading(true);
             try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setReviews([]);
-                    return;
-                }
-                const data = await getAllComments(token);
+                const data = await getAllComments();
                 setReviews(data || []);
+                console.log(data)
             } catch (error) {
                 console.error('Error fetching reviews:', error);
                 message.error(error.message || 'Failed to load reviews');
@@ -39,8 +36,8 @@ const Reviews = () => {
                 <div className="text-center text-gray-500">No reviews available</div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {reviews.map((review, index) => (
-                        <div key={index} className="p-4 bg-white">
+                    {reviews.map((review) => (
+                        <div key={review._id} className="p-4 bg-white">
                             <div className="flex gap-y-5 items-center mb-2">
                                 {[...Array(review.rating)].map((_, i) => (
                                     <svg
@@ -53,10 +50,27 @@ const Reviews = () => {
                                     </svg>
                                 ))}
                             </div>
-                            <p className="text-gray-700">{review.content}</p>
+
                             <div className="flex justify-start items-center mt-3">
-                                <div className="w-12 h-12 bg-gray-500 rounded-full"></div>
-                                <p className="text-gray-500 text-lg ml-2 font-bold">{review.user?.name || 'Anonymous'}</p>
+
+                                <Avatar
+                                    size={70}
+                                    src={review.user?.profileUrl}
+                                    icon={!review.user?.profileUrl && <UserOutlined />}
+                                    style={{
+                                        backgroundColor: review.user?.profileUrl,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+
+                                </Avatar>
+                                <div className='ml-4 '>
+                                    <p className="text-gray-700">{review.content}</p>
+                                    <p className="text-gray-500 text-lg font-bold">{review.user?.name || 'Anonymous'}</p>
+                                </div>
+
                             </div>
                         </div>
                     ))}

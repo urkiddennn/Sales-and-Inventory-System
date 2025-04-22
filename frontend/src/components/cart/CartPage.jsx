@@ -123,13 +123,12 @@ const CartPage = () => {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
-                console.log("CartPage: No token, redirecting to /login");
                 throw new Error("Please log in");
             }
             if (!cart.items || cart.items.length === 0) {
-                console.log("CartPage: Cart is empty");
                 throw new Error("Cart is empty");
             }
+            console.log("Cart items:", cart.items); // Log cart items
             const orderData = {
                 products: cart.items.map((item) => ({
                     product: item.product._id,
@@ -137,7 +136,7 @@ const CartPage = () => {
                     price: item.product.isOnSale ? item.product.salePrice : item.product.price,
                 })),
                 shippingAddress: {
-                    fullName: "John Doe", // Placeholder; replace with actual user data
+                    fullName: "John Doe",
                     street: "123 Main St",
                     city: "Anytown",
                     state: "CA",
@@ -153,7 +152,6 @@ const CartPage = () => {
             console.error("CartPage: Error creating order:", error.message);
             message.error(error.message || "Failed to create order");
             if (error.message?.includes("Unauthorized")) {
-                console.log("CartPage: Unauthorized, redirecting to /login");
                 localStorage.removeItem("token");
                 navigate("/login");
             }

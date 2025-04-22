@@ -1,4 +1,3 @@
-// src/components/profile/Profile.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -42,17 +41,10 @@ const Profile = () => {
     const [submitting, setSubmitting] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [passwordMode, setPasswordMode] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        address: "",
-        mobileNumber: "",
-    });
-    const [fileList, setFileList] = useState([]);
-    const [passwordData, setPasswordData] = useState({ password: "", confirmPassword: "" });
     const [error, setError] = useState("");
     const [form] = Form.useForm();
     const [passwordForm] = Form.useForm();
+    const [fileList, setFileList] = useState([]);
 
     const themeColor = "#15803d"; // green-700
 
@@ -77,20 +69,30 @@ const Profile = () => {
                 }
 
                 const userData = await response.json();
-                console.log("Fetched user data:", userData); // Debug
+                console.log("Fetched user data:", userData);
                 setUser({ ...userData, createdAt: userData.createdAt || new Date() });
-                setFormData({
-                    name: userData.name || "",
-                    email: userData.email || "",
-                    address: userData.address || "",
-                    mobileNumber: userData.mobileNumber || "",
-                });
                 form.setFieldsValue({
                     name: userData.name || "",
                     email: userData.email || "",
-                    address: userData.address || "",
+                    address: {
+                        fullName: userData.address?.fullName || "",
+                        street: userData.address?.street || "",
+                        city: userData.address?.city || "",
+                        state: userData.address?.state || "",
+                        zipCode: userData.address?.zipCode || "",
+                    },
                     mobileNumber: userData.mobileNumber || "",
                 });
+                if (userData.profileUrl) {
+                    setFileList([
+                        {
+                            uid: "-1",
+                            name: "profile-picture",
+                            status: "done",
+                            url: userData.profileUrl,
+                        },
+                    ]);
+                }
             } catch (error) {
                 console.error("Error fetching profile:", error);
                 message.error("Failed to load profile. Please try again.");
@@ -115,13 +117,17 @@ const Profile = () => {
             const formDataToSend = new FormData();
             formDataToSend.append("name", values.name);
             formDataToSend.append("email", values.email);
-            formDataToSend.append("address", values.address);
+            formDataToSend.append("address[fullName]", values.address.fullName);
+            formDataToSend.append("address[street]", values.address.street);
+            formDataToSend.append("address[city]", values.address.city);
+            formDataToSend.append("address[state]", values.address.state);
+            formDataToSend.append("address[zipCode]", values.address.zipCode);
             formDataToSend.append("mobileNumber", values.mobileNumber);
-            if (fileList.length > 0 && fileList[0].originFileObj) {
-                console.log("Sending profilePicture:", fileList[0].originFileObj); // Debug
+            if (fileList.length > 0 && fileList[0]?.originFileObj) {
+                console.log("Sending profilePicture:", fileList[0].originFileObj);
                 formDataToSend.append("profilePicture", fileList[0].originFileObj);
             } else {
-                console.log("No profilePicture selected"); // Debug
+                console.log("No profilePicture selected");
             }
 
             const response = await fetch(
@@ -137,7 +143,7 @@ const Profile = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("Backend error:", errorData); // Debug
+                console.error("Backend error:", errorData);
                 if (errorData.error.includes("Email already in use")) {
                     throw new Error("Email is already in use by another account");
                 }
@@ -148,7 +154,7 @@ const Profile = () => {
             }
 
             const updatedUser = await response.json();
-            console.log("Updated user:", updatedUser); // Debug
+            console.log("Updated user:", updatedUser);
             setUser(updatedUser);
             setEditMode(false);
             setFileList([]);
@@ -197,10 +203,10 @@ const Profile = () => {
     const uploadProps = {
         onRemove: () => {
             setFileList([]);
-            console.log("Removed file from fileList"); // Debug
+            console.log("Removed file from fileList");
         },
         beforeUpload: (file) => {
-            console.log("Selected file:", file); // Debug
+            console.log("Selected file:", file);
             const isImage = file.type.startsWith("image/");
             if (!isImage) {
                 message.error("You can only upload image files!");
@@ -212,11 +218,11 @@ const Profile = () => {
                 return false;
             }
             setFileList([file]);
-            console.log("Updated fileList:", [file]); // Debug
-            return false; // Prevent automatic upload
+            console.log("Updated fileList:", [file]);
+            return false;
         },
         onChange: (info) => {
-            console.log("Upload onChange:", info); // Debug
+            console.log("Upload onChange:", info);
             setFileList(info.fileList);
         },
         fileList,
@@ -250,7 +256,7 @@ const Profile = () => {
                     boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
                     border: "1px solid #d9d9d9",
                 }}
-                bodyStyle={{ padding: 0 }}
+                styles={{ body: { padding: 0 } }} // Fix deprecated bodyStyle
             >
                 <div
                     style={{
@@ -269,9 +275,9 @@ const Profile = () => {
                     <Row gutter={[32, 24]} align="middle">
                         <Col xs={24} sm={8} style={{ textAlign: "center" }}>
                             <Avatar
-                                key={user.profileUrl || "default"} // Force re-render
+                                key={user.profileUrl || "default"}
                                 size={200}
-                                src={user.profileUrl ? `${user.profileUrl}?t=${Date.now()}` : undefined} // Cache-busting
+                                src={user.profileUrl ? `${user.profileUrl}?t=${Date.now()}` : undefined}
                                 style={{
                                     backgroundColor: user.profileUrl ? "transparent" : themeColor,
                                     fontSize: "42px",
@@ -298,7 +304,11 @@ const Profile = () => {
                                         <Space>
                                             <HomeOutlined style={{ color: themeColor }} />
                                             <Text strong>Address:</Text>
-                                            <Text>{user.address || "No address provided"}</Text>
+                                            <Text>
+                                                {user.address?.fullName
+                                                    ? `${user.address.fullName}, ${user.address.street}, ${user.address.city}, ${user.address.state} ${user.address.zipCode}`
+                                                    : "No address provided"}
+                                            </Text>
                                         </Space>
                                         <Space>
                                             <PhoneOutlined style={{ color: themeColor }} />
@@ -357,7 +367,7 @@ const Profile = () => {
                         <>
                             <Title level={4}>Edit Profile</Title>
                             {error && <Alert message={error} type="error" style={{ marginBottom: "16px" }} />}
-                            <Form form={form} layout="vertical" initialValues={formData} onFinish={handleEditSubmit}>
+                            <Form form={form} layout="vertical" onFinish={handleEditSubmit}>
                                 <Form.Item
                                     name="name"
                                     label="Name"
@@ -376,9 +386,40 @@ const Profile = () => {
                                     <Input />
                                 </Form.Item>
                                 <Form.Item
-                                    name="address"
-                                    label="Address"
-                                    rules={[{ required: true, message: "Please enter your address" }]}
+                                    name={["address", "fullName"]}
+                                    label="Full Name"
+                                    rules={[{ required: true, message: "Please enter your full name" }]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    name={["address", "street"]}
+                                    label="Street Address"
+                                    rules={[{ required: true, message: "Please enter your street address" }]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    name={["address", "city"]}
+                                    label="City"
+                                    rules={[{ required: true, message: "Please enter your city" }]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    name={["address", "state"]}
+                                    label="State"
+                                    rules={[{ required: true, message: "Please enter your state" }]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    name={["address", "zipCode"]}
+                                    label="Zip Code"
+                                    rules={[
+                                        { required: true, message: "Please enter your zip code" },
+                                        { pattern: /^[0-9]{5}$/, message: "Please enter a valid 5-digit zip code" },
+                                    ]}
                                 >
                                     <Input />
                                 </Form.Item>
@@ -396,21 +437,9 @@ const Profile = () => {
                                     <Input />
                                 </Form.Item>
                                 <Form.Item name="profilePicture" label="Profile Picture">
-                                    <Upload {...uploadProps}>
+                                    <Upload {...uploadProps} listType="picture">
                                         <Button icon={<UploadOutlined />}>Upload Profile Picture</Button>
                                     </Upload>
-                                    {/* Fallback native input for testing */}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            if (e.target.files[0]) {
-                                                setFileList([{ originFileObj: e.target.files[0] }]);
-                                                console.log("Selected file (native input):", e.target.files[0]);
-                                            }
-                                        }}
-                                        style={{ marginTop: "8px" }}
-                                    />
                                 </Form.Item>
                                 <Form.Item>
                                     <Space>

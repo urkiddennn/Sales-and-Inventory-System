@@ -58,40 +58,59 @@ export const login = async (c: Context) => {
         return c.json({ error: "Internal Server Error" }, 500);
     }
 };
-
 export const register = async (c: Context) => {
     try {
         const body = await c.req.parseBody<{
             name: string;
             email: string;
             password: string;
-            address: string;
+            'address[fullName]': string;
+            'address[street]': string;
+            'address[city]': string;
+            'address[state]': string;
+            'address[zipCode]': string;
             mobileNumber: string;
             profilePicture?: File | string;
             role?: string;
         }>();
 
-        const { name, email, password, address, mobileNumber, profilePicture, role } = body;
+        const {
+            name,
+            email,
+            password,
+            'address[fullName]': fullName,
+            'address[street]': street,
+            'address[city]': city,
+            'address[state]': state,
+            'address[zipCode]': zipCode,
+            mobileNumber,
+            profilePicture,
+            role,
+        } = body;
 
         console.log("Received signup body:", {
             name,
             email,
-            password: password,
-            address,
+            password: '[REDACTED]',
+            address: { fullName, street, city, state, zipCode },
             mobileNumber,
             profilePicture: profilePicture ? (profilePicture instanceof File ? `[File: ${profilePicture.name}]` : profilePicture) : undefined,
             role,
         });
-        console.log("Raw password received:", password); // Debug
 
         // Validate required fields
-        if (!name || !email || !password || !address || !mobileNumber) {
-            return c.json({ error: "Email, password, name, address, and mobile number are required" }, 400);
+        if (!name || !email || !password || !fullName || !street || !city || !state || !zipCode || !mobileNumber) {
+            return c.json({ error: "All fields are required" }, 400);
         }
 
         // Validate mobile number
         if (!/^[0-9]{10}$/.test(mobileNumber)) {
             return c.json({ error: "Mobile number must be a valid 10-digit number" }, 400);
+        }
+
+        // Validate zip code
+        if (!/^[0-9]{5}$/.test(zipCode)) {
+            return c.json({ error: "Zip code must be a valid 5-digit number" }, 400);
         }
 
         // Check if email exists
@@ -134,20 +153,28 @@ export const register = async (c: Context) => {
         console.log(`Registering ${email} with role: ${userRole}`);
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log("Hashed password:", hashedPassword); // Debug
+        console.log("Hashed password:", hashedPassword);
 
         const user = new User({
             name,
             email: email.toLowerCase(),
             password: hashedPassword,
-            address,
+            address: { fullName, street, city, state, zipCode },
             mobileNumber,
             profileUrl,
             role: userRole,
         });
 
         await user.save();
-        console.log("Saved user:", { id: user._id, email: user.email, name, password: user.password });
+        console.log("Saved user:", {
+            id: user._id,
+            email: user.email,
+            name,
+            address: user.address,
+            mobileNumber,
+            profileUrl,
+            role: user.role
+        });
 
         const payload = {
             id: user._id.toString(),

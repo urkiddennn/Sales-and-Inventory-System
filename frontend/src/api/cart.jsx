@@ -125,12 +125,25 @@ export const createOrder = async (token, orderData) => {
             },
             body: JSON.stringify(orderData),
         });
+
+        const text = await response.text();
+        console.log('Raw response:', text);
+
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = JSON.parse(text);
+            } catch (e) {
+                console.error('Failed to parse error response:', text);
+                throw new Error('Server returned invalid JSON');
+            }
+            console.error('Error response:', errorData);
             throw new Error(errorData.message || 'Failed to create order');
         }
-        return response.json();
+
+        return JSON.parse(text);
     } catch (error) {
+        console.error('Create order error:', error);
         message.error(error.message || 'An unexpected error occurred');
         throw error;
     }

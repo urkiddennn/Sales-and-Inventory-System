@@ -9,7 +9,13 @@ const SignupPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [address, setAddress] = useState('');
+    const [address, setAddress] = useState({
+        fullName: '',
+        street: '',
+        city: '',
+        state: '',
+        zipCode: ''
+    });
     const [mobileNumber, setMobileNumber] = useState('');
     const [fileList, setFileList] = useState([]);
     const [error, setError] = useState('');
@@ -38,9 +44,14 @@ const SignupPage = () => {
             console.log("Validation error: Passwords do not match");
             return;
         }
-        if (!address) {
-            setError('Address is required');
-            console.log("Validation error: Address is required");
+        if (!address.fullName || !address.street || !address.city || !address.state || !address.zipCode) {
+            setError('All address fields are required');
+            console.log("Validation error: Incomplete address");
+            return;
+        }
+        if (!/^[0-9]{5}$/.test(address.zipCode)) {
+            setError('Please enter a valid 5-digit zip code');
+            console.log("Validation error: Invalid zip code");
             return;
         }
         if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
@@ -50,13 +61,16 @@ const SignupPage = () => {
         }
 
         setIsLoading(true);
-
         try {
             const formData = new FormData();
             formData.append('name', name);
-            formData.append('email', email.toLowerCase()); // Normalize email
+            formData.append('email', email.toLowerCase());
             formData.append('password', password);
-            formData.append('address', address);
+            formData.append('address[fullName]', address.fullName);
+            formData.append('address[street]', address.street);
+            formData.append('address[city]', address.city);
+            formData.append('address[state]', address.state);
+            formData.append('address[zipCode]', address.zipCode);
             formData.append('mobileNumber', mobileNumber);
             if (fileList.length > 0 && fileList[0].originFileObj) {
                 console.log('Sending profilePicture:', fileList[0].originFileObj);
@@ -64,12 +78,10 @@ const SignupPage = () => {
             } else {
                 console.log('No profilePicture selected');
             }
-
             console.log('FormData contents:');
             for (const [key, value] of formData.entries()) {
                 console.log(`${key}: ${value instanceof File ? `[File: ${value.name}]` : value}`);
             }
-
             await signup(formData);
             console.log("Signup successful, navigating to /");
             message.success("Registration successful!");
@@ -102,7 +114,7 @@ const SignupPage = () => {
             }
             setFileList([file]);
             console.log('Updated fileList:', [file]);
-            return false; // Prevent automatic upload
+            return false;
         },
         onChange: (info) => {
             console.log('Upload onChange:', info);
@@ -113,16 +125,15 @@ const SignupPage = () => {
     };
 
     return (
-        <div className="max-w-md mx-auto my-12 p-6 bg-white rounded-lg shadow-md">
+        <div className="max-w-2xl mx-auto my-12 p-6 bg-white rounded-lg shadow-md">
             <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Create an Account</h1>
-
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
                     <span className="block sm:inline">{error}</span>
                 </div>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                {/* Column 1 */}
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Full Name
@@ -138,7 +149,6 @@ const SignupPage = () => {
                         placeholder="John Doe"
                     />
                 </div>
-
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email Address
@@ -154,23 +164,81 @@ const SignupPage = () => {
                         placeholder="your@email.com"
                     />
                 </div>
-
                 <div>
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                        Address
+                    <label htmlFor="address-fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name for Address
                     </label>
                     <input
-                        id="address"
+                        id="address-fullName"
                         type="text"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
+                        value={address.fullName}
+                        onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
                         required
                         disabled={isLoading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="123 Main St, City, Country"
+                        placeholder="John Doe"
                     />
                 </div>
-
+                <div>
+                    <label htmlFor="address-street" className="block text-sm font-medium text-gray-700 mb-1">
+                        Street Address
+                    </label>
+                    <input
+                        id="address-street"
+                        type="text"
+                        value={address.street}
+                        onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="123 Main St"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="address-city" className="block text-sm font-medium text-gray-700 mb-1">
+                        City
+                    </label>
+                    <input
+                        id="address-city"
+                        type="text"
+                        value={address.city}
+                        onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Anytown"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="address-state" className="block text-sm font-medium text-gray-700 mb-1">
+                        State
+                    </label>
+                    <input
+                        id="address-state"
+                        type="text"
+                        value={address.state}
+                        onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="CA"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="address-zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                        Zip Code
+                    </label>
+                    <input
+                        id="address-zipCode"
+                        type="text"
+                        value={address.zipCode}
+                        onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="12345"
+                    />
+                </div>
                 <div>
                     <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
                         Mobile Number
@@ -186,7 +254,6 @@ const SignupPage = () => {
                         placeholder="1234567890"
                     />
                 </div>
-
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                         Password
@@ -202,7 +269,6 @@ const SignupPage = () => {
                         placeholder="••••••••"
                     />
                 </div>
-
                 <div>
                     <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
                         Confirm Password
@@ -218,8 +284,7 @@ const SignupPage = () => {
                         placeholder="••••••••"
                     />
                 </div>
-
-                <div>
+                <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Profile Picture (Optional)
                     </label>
@@ -229,8 +294,7 @@ const SignupPage = () => {
                         </Button>
                     </Upload>
                 </div>
-
-                <div className="flex items-center">
+                <div className="col-span-2 flex items-center">
                     <input
                         id="terms"
                         type="checkbox"
@@ -245,8 +309,7 @@ const SignupPage = () => {
                         </Link>
                     </label>
                 </div>
-
-                <div>
+                <div className="col-span-2">
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -256,7 +319,6 @@ const SignupPage = () => {
                     </button>
                 </div>
             </form>
-
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
                     Already have an account?{' '}

@@ -73,25 +73,31 @@ const Product = ({ product, onCancel, onSuccess }) => {
                 throw new Error("No authentication token found");
             }
 
-            console.log("Form values:", values);
-            const { isOnSale, salePrice } = values;
+            console.log("Raw form values:", values);
+
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, value]) => {
+                if (key !== "image" && value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+            if (fileList.length > 0 && fileList[0]?.originFileObj) {
+                formData.append("image", fileList[0].originFileObj);
+            } else if (fileList.length > 0 && fileList[0]?.url) {
+                formData.append("image", fileList[0].url); // Send existing image URL
+            }
+
+            console.log("FormData contents:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
 
             if (product) {
                 console.log("Updating product", product._id);
-                await updateProduct(token, product._id, { isOnSale, salePrice });
+                await updateProduct(token, product._id, formData);
                 message.success("Product updated successfully");
             } else {
-                // Handle create product case (unchanged)
                 console.log("Creating new product");
-                const formData = new FormData();
-                Object.entries(values).forEach(([key, value]) => {
-                    if (key !== "image" && value !== undefined) {
-                        formData.append(key, value);
-                    }
-                });
-                if (fileList.length > 0 && fileList[0]?.originFileObj) {
-                    formData.append("image", fileList[0].originFileObj);
-                }
                 await createProduct(token, formData);
                 message.success("Product created successfully");
             }

@@ -2,25 +2,53 @@
 import { Context } from 'hono';
 import { Order } from '../model/Order';
 import { Product } from '../model/Product';
+import {User} from "../model/User"
+
+
 
 export const createOrder = async (c: Context) => {
-  const userId = c.get('jwtPayload').id;
-  const { products } = await c.req.json();
+    try {
+        const userId = c.get('jwtPayload').id;
+        const body = await c.req.json();
+        console.log("Received order data:", body);
+        const { products } = body;
 
-  let total = 0;
-  const orderProducts = await Promise.all(products.map(async (item: any) => {
-    const product = await Product.findById(item.productId);
-    if (!product || product.stock < item.quantity) {
-      throw new Error('Invalid product or insufficient stock');
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            return c.json({ message: "Products array is required" }, 400);
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return c.json({ message: "User not found" }, 404);
+        }
+
+        let total = 0;
+        const orderProducts = await Promise.all(products.map(async (item: any) => {
+            const product = await Product.findById(item.product);
+            if (!product || product.stock < item.quantity) {
+                throw new Error(`Invalid product or insufficient stock for product ID: ${item.product}`);
+            }
+            const price = product.isOnSale && product.salePrice ? product.salePrice : product.price;
+            total += price * item.quantity;
+            product.stock -= item.quantity;
+            await product.save();
+            return { product: product._id, quantity: item.quantity, price };
+        }));
+
+        const order = new Order({
+            user: userId,
+            products: orderProducts,
+            shippingAddress: user.address, // Use user’s address
+            total,
+            status: 'pending',
+        });
+
+        await order.save();
+        return c.json(order, 201);
+    } catch (error: any) {
+        console.error("Error creating order:", error);
+        return c.json({ message: error.message || "Internal server error" }, 500);
     }
-    const price = product.isOnSale && product.salePrice ? product.salePrice : product.price;
-    total += price * item.quantity;
-    return { product: product._id, quantity: item.quantity, price };
-  }));
-
-  const order = new Order({ user: userId, products: orderProducts, total });
-  await order.save();
-  return c.json(order);
 };
 
 export const getOrders = async (c: Context) => {

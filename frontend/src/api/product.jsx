@@ -24,7 +24,10 @@ export const createProduct = async (token, formData) => {
     try {
         console.log("Creating product at:", `${BASE_URL}/products`);
         console.log("Token:", token);
-        console.log("Form Data:", formData);
+        console.log("Form Data contents:");
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
 
         const response = await fetch(`${BASE_URL}/products`, {
             method: "POST",
@@ -34,36 +37,63 @@ export const createProduct = async (token, formData) => {
             body: formData,
         });
 
+        // Log raw response
+        const text = await response.text();
+        console.log("Raw response:", text);
+
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = JSON.parse(text);
+            } catch (e) {
+                console.error("Failed to parse response as JSON:", text);
+                throw new Error("Server returned invalid JSON");
+            }
             console.error("Error Response:", errorData);
-            throw new Error(errorData.message || "Failed to create product");
+            throw new Error(errorData.error || "Failed to create product");
         }
 
-        return await response.json();
+        return JSON.parse(text);
     } catch (error) {
         message.error(error.message || "An unexpected error occurred");
         throw error;
     }
 };
-export const updateProduct = async (token, id, { isOnSale, salePrice }) => {
+export const updateProduct = async (token, id, formData) => {
     try {
-        console.log("Updating product at:", `${BASE_URL}/products/${id}/sale`);
-        const response = await fetch(`${BASE_URL}/products/${id}/sale`, {
+        console.log("Updating product at:", `${BASE_URL}/products/${id}`);
+        console.log("FormData contents:");
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        const response = await fetch(`${BASE_URL}/products/${id}`, {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ isOnSale, salePrice }),
+            body: formData,
         });
+
+        const text = await response.text();
+        console.log("Raw response:", text);
+
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = JSON.parse(text);
+            } catch (e) {
+                console.error("Failed to parse response as JSON:", text);
+                throw new Error("Server returned invalid JSON");
+            }
+            console.error("Error Response:", errorData);
             throw new Error(errorData.error || "Failed to update product");
         }
-        return await response.json();
+
+        return JSON.parse(text);
     } catch (error) {
-        message.error(error.message);
+        console.error("Update product error:", error);
+        message.error(error.message || "An unexpected error occurred");
         throw error;
     }
 };

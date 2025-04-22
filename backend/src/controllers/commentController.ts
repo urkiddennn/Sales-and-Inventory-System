@@ -18,7 +18,8 @@ export const addComment = async (c: Context) => {
     });
 
     await comment.save();
-    await comment.populate('user', 'name');
+    await comment.populate('user', 'name profileUrl');
+
     return c.json(comment);
   } catch (error) {
     return c.json({ message: 'Failed to add comment' }, 500);
@@ -41,7 +42,7 @@ export const getProductComments = async (c: Context) => {
 export const getAllComments = async (c: Context) => {
   try {
     const comments = await Comment.find()
-      .populate('user', 'name')
+      .populate('user', 'name profileUrl')
       .populate('product', 'name')
       .sort({ createdAt: -1 });
     return c.json(comments);

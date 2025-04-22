@@ -24,6 +24,7 @@ import ProductDescriptionPage from "./components/products/ProductDescriptionPage
 import OrdersPage from "./components/order/OrdersPage";
 import OrderPage from "./components/order/OrderPage";
 import ChatPage from "./components/chat/ChatPage";
+import ContactPage from "./components/contact/ContactPage";
 
 // Public route component
 const PublicRoute = ({ children }) => {
@@ -229,19 +230,12 @@ const AppContent = () => {
                     </NonAdminLayout>
                 }
             />
-            <Route
-                path="/about"
-                element={
-                    <NonAdminLayout>
-                        <div className="p-6">About Page (Placeholder)</div>
-                    </NonAdminLayout>
-                }
-            />
+
             <Route
                 path="/contact"
                 element={
                     <NonAdminLayout>
-                        <div className="p-6">Contact Page (Placeholder)</div>
+                        <ContactPage />
                     </NonAdminLayout>
                 }
             />

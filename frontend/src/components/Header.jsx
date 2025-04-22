@@ -3,11 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { IoMdSearch } from 'react-icons/io';
 import { MdFavoriteBorder } from 'react-icons/md';
 import { TiShoppingCart } from 'react-icons/ti';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaFacebook, FaTiktok } from 'react-icons/fa';
 import { BsChatDots } from 'react-icons/bs';
 import { FaUser } from 'react-icons/fa';
 import { useAuth } from '../components/auth/AuthContext';
-
+import logoImg from "../assets/logo.png"
 const Header = ({ onCartClick }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { isAuthenticated, logout } = useAuth();
@@ -33,13 +33,25 @@ const Header = ({ onCartClick }) => {
         setIsMenuOpen(false); // Close menu on mobile
     };
 
+    const logoStyle = {
+        backgroundImage: `url(${logoImg})`,// Replace with your image URL
+        backgroundSize: 'cover', // Ensures the image covers the entire div
+        backgroundPosition: 'center'
+    }
+
     return (
         <header className="text-white flex flex-col">
-            <div className="w-full h-10 bg-green-700 flex items-center justify-center">
-                <span className="text-sm">Solar Products Trading</span>
+            <div className="w-full h-10 bg-green-700 flex items-center justify-between text-xs px-10 md:text-lg">
+                <span>Call Us: +639322834646 / +639266043515</span>
+                <span className="text-sm">CG3 Solar Products Tading </span>
+                <div className='flex gap-2'>
+                    <a href='https://www.facebook.com/cg3trading'> <FaFacebook size={"1.2em"} className='text-yellow-400' /></a>
+                    <a href='https://www.tiktok.com/@cg3solarproductstrading'> <FaTiktok size={"1.2em"} className='text-yellow-400' /></a>
+
+                </div>
             </div>
             <div className="w-full bg-white text-gray-800 px-4 sm:px-6 lg:px-10 py-4 flex justify-between items-center">
-                <div className="text-xl font-bold">Sales Inventory</div>
+                <div className="text-xl font-bold w-15 h-10" style={logoStyle}></div>
 
                 <nav
                     className={`${isMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row absolute lg:static top-24 left-0 w-full lg:w-auto bg-white lg:bg-transparent text-gray-800 lg:space-x-4 space-y-4 lg:space-y-0 p-4 lg:p-0 z-50`}
@@ -56,9 +68,7 @@ const Header = ({ onCartClick }) => {
                     <Link to="/orders" className="hover:underline" onClick={() => handleLinkClick('/orders')}>
                         Orders
                     </Link>
-                    <Link to="/about" className="hover:underline" onClick={() => handleLinkClick('/about')}>
-                        About
-                    </Link>
+
                     <Link to="/contact" className="hover:underline" onClick={() => handleLinkClick('/contact')}>
                         Contact
                     </Link>

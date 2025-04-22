@@ -46,7 +46,7 @@ app.get("/products/:id", productController.getProductById); // Fetch a single pr
 app.get("/products/sale", productController.getSaleProducts); // Fetch sale products
 
 // Protected routes (require authentication)
-app.patch("/products/:id/sale", authMiddleware, productController.updateSaleStatus); // Update sale status
+app.put("/products/:id/sale", authMiddleware, productController.updateSaleStatus); // Update sale status
 
 // Admin-only routes (require authentication + admin role)
 app.post('/orders', orderController.createOrder);

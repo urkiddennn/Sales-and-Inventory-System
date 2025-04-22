@@ -66,7 +66,6 @@ const Product = ({ product, onCancel, onSuccess }) => {
 
         console.log("Proceeding with Product form in modal");
     }, [isAuthenticated, userRole, authLoading, product, form, onCancel]);
-
     const onFinish = async (values) => {
         try {
             const token = localStorage.getItem("token");
@@ -75,27 +74,24 @@ const Product = ({ product, onCancel, onSuccess }) => {
             }
 
             console.log("Form values:", values);
-            const formData = new FormData();
-            Object.entries(values).forEach(([key, value]) => {
-                if (key !== "image" && value !== undefined) {
-                    formData.append(key, value);
-                }
-            });
-
-            if (fileList.length > 0 && fileList[0]?.originFileObj) {
-                formData.append("image", fileList[0].originFileObj);
-            }
-
-            for (let [key, value] of formData.entries()) {
-                console.log("FormData:", key, value);
-            }
+            const { isOnSale, salePrice } = values;
 
             if (product) {
                 console.log("Updating product", product._id);
-                await updateProduct(token, product._id, formData);
+                await updateProduct(token, product._id, { isOnSale, salePrice });
                 message.success("Product updated successfully");
             } else {
+                // Handle create product case (unchanged)
                 console.log("Creating new product");
+                const formData = new FormData();
+                Object.entries(values).forEach(([key, value]) => {
+                    if (key !== "image" && value !== undefined) {
+                        formData.append(key, value);
+                    }
+                });
+                if (fileList.length > 0 && fileList[0]?.originFileObj) {
+                    formData.append("image", fileList[0].originFileObj);
+                }
                 await createProduct(token, formData);
                 message.success("Product created successfully");
             }
@@ -109,7 +105,6 @@ const Product = ({ product, onCancel, onSuccess }) => {
             message.error(`Failed to save product: ${error.message}`);
         }
     };
-
     const handleSaleToggle = (checked) => {
         setIsOnSale(checked);
         if (!checked) {

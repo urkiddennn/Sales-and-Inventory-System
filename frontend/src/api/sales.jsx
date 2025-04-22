@@ -1,4 +1,5 @@
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+
 
 export const createSale = async (token, saleData) => {
     const response = await fetch(`${API_URL}/sales`, {
@@ -10,6 +11,7 @@ export const createSale = async (token, saleData) => {
         body: JSON.stringify(saleData),
     });
     if (!response.ok) throw new Error('Failed to create sale');
+
     return response.json();
 };
 
@@ -18,5 +20,6 @@ export const getSales = async (token) => {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to fetch sales');
+
     return response.json();
 };

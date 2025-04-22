@@ -12,7 +12,7 @@ app.use(
   '*',
   cors({
     origin: ['http://localhost:5173'], // Explicitly allow the frontend origin
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow methods
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Explicitly allow methods
     allowHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
     credentials: true, // Allow credentials (if needed, e.g., for cookies)
   })

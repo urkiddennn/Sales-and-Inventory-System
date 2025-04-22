@@ -46,18 +46,21 @@ export const createProduct = async (token, formData) => {
         throw error;
     }
 };
-
-export const updateProduct = async (token, id, formData) => {
+export const updateProduct = async (token, id, { isOnSale, salePrice }) => {
     try {
-        console.log("Updating product at:", `${BASE_URL}/products/${id}`);
-        const response = await fetch(`${BASE_URL}/products/${id}`, {
+        console.log("Updating product at:", `${BASE_URL}/products/${id}/sale`);
+        const response = await fetch(`${BASE_URL}/products/${id}/sale`, {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
             },
-            body: formData,
+            body: JSON.stringify({ isOnSale, salePrice }),
         });
-        if (!response.ok) throw new Error("Failed to update product");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update product");
+        }
         return await response.json();
     } catch (error) {
         message.error(error.message);

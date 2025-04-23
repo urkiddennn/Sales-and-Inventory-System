@@ -1,30 +1,23 @@
-import { Hono } from 'hono';
-import { authMiddleware, adminMiddleware } from '../middleware/auth';
-import { getRateLimitMiddleware } from '../middleware/rateLimit';
-import * as authController from '../controllers/authController';
-import * as productController from '../controllers/productController';
-import * as saleController from '../controllers/saleController';
-import * as chatController from '../controllers/chatController';
-import * as commentController from '../controllers/commentController';
-import * as orderController from '../controllers/orderController';
-import * as cartController from '../controllers/cartController';
-import * as detailsController from '../controllers/detailsController';
-import * as userController from '../controllers/userController';
+import express from 'express';
+import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
 
-const router = new Hono();
+import * as authController from '../controllers/authController.js';
+import * as productController from '../controllers/productController.js';
+import * as saleController from '../controllers/saleController.js';
+import * as chatController from '../controllers/chatController.js';
+import * as commentController from '../controllers/commentController.js';
+import * as orderController from '../controllers/orderController.js';
+import * as cartController from '../controllers/cartController.js';
 
-const rateLimit = getRateLimitMiddleware({ limit: 5, windowMs: 60 * 1000 });
+import * as userController from '../controllers/userController.js';
+
+const router = express.Router();
+
+
 
 // Public routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
-
-// Protected routes
-router.use('/sales/*', authMiddleware);
-router.use('/chats/*', authMiddleware);
-router.use('/orders/*', authMiddleware);
-router.use('/cart/*', authMiddleware);
-router.use('/users/*', authMiddleware);
 
 // Comment routes
 router.get('/comments', commentController.getAllComments);
@@ -38,6 +31,13 @@ router.get('/products/sale', productController.getSaleProducts);
 router.post('/products', productController.createProduct);
 router.delete('/products/:id', productController.deleteProduct);
 router.put('/products/:id', productController.updateProduct);
+
+// Protected routes
+router.use('/sales', authMiddleware);
+router.use('/chats', authMiddleware);
+router.use('/orders', authMiddleware);
+router.use('/cart', authMiddleware);
+router.use('/users', authMiddleware);
 
 // Protected product routes
 router.put('/products/:id/sale', authMiddleware, productController.updateSaleStatus);
@@ -73,6 +73,6 @@ router.get('/getAllUsers', userController.getAllUsers);
 router.get('/users/:id', adminMiddleware, userController.getUserById);
 
 // Details route
-router.post('/details', detailsController.createDetails);
+
 
 export default router;

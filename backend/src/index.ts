@@ -9,9 +9,12 @@ const app = new Hono();
 
 // Apply CORS middleware before any routes
 app.use(
-  '*',
-  cors()
-);
+    '*',
+    cors({
+      origin: ['*', 'http://your-frontend-domain.com'],
+      credentials: true,
+    })
+  );
 
 // Mount all routes under /api prefix
 app.route('/api', routes);

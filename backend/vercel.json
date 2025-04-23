@@ -3,14 +3,18 @@
     "outputDirectory": "dist",
     "builds": [
         {
-            "src": "dist/index.ts",
+            "src": "dist/index.js",
             "use": "@vercel/node"
         }
     ],
     "routes": [
         {
+            "src": "/api/(.*)",
+            "dest": "dist/index.js"
+        },
+        {
             "src": "/(.*)",
-            "dest": "dist/index.ts"
+            "dest": "dist/index.js"
         }
     ]
 }

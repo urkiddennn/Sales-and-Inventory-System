@@ -15,7 +15,7 @@ const app = new Hono();
 app.use(
   '*',
   cors({
-    origin: ['*'], // Fallback to all origins
+    origin: ['*'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -34,7 +34,7 @@ app.get('/api/test', (c) => c.text('Test route works!'));
 // Handle favicon
 app.get('/favicon.ico', (c) => c.text('No favicon', 404));
 
-// Handle /api/auth explicitly
+// Handle /api/auth
 app.get('/api/auth', (c) => c.text('Use /api/auth/register or /api/auth/login', 404));
 
 // Error handling

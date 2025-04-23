@@ -15,7 +15,7 @@ const app = new Hono();
 app.use(
   '*',
   cors({
-    origin: ['*'],
+    origin: ['*'], // Fallback to all origins
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -26,13 +26,16 @@ app.use(
 app.route('/api', routes);
 
 // Root route
-app.get('/', (c) => c.text('Hono API is running! Try /api/...'));
+app.get('/', (c) => c.text('Hono API is running! Try /api/auth/register or /api/auth/login'));
 
 // Test route
 app.get('/api/test', (c) => c.text('Test route works!'));
 
 // Handle favicon
 app.get('/favicon.ico', (c) => c.text('No favicon', 404));
+
+// Handle /api/auth explicitly
+app.get('/api/auth', (c) => c.text('Use /api/auth/register or /api/auth/login', 404));
 
 // Error handling
 app.onError((err, c) => {

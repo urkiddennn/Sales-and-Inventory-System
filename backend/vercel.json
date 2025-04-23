@@ -3,7 +3,7 @@
     "outputDirectory": "dist",
     "builds": [
         {
-            "src": "dist/src/index.js",
+            "src": "dist/index.js",
             "use": "@vercel/node"
         }
     ],

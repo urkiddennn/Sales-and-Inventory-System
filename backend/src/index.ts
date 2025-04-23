@@ -1,49 +1,76 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { connectDB } from './config/db';
 import { env } from './config/env';
 import routes from './routes';
-import { cors } from 'hono/cors';
 
+// Debug environment variables
+console.log('MONGODB_URI:', env.MONGODB_URI ? env.MONGODB_URI.replace(/:.*@/, ':****@') : 'undefined');
+
+// Initialize Hono app
 const app = new Hono();
 
-// Apply CORS middleware before any routes
+// Apply CORS middleware
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:5173'], // Explicitly allow the frontend origin
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Explicitly allow methods
-    allowHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
-    credentials: true, // Allow credentials (if needed, e.g., for cookies)
+    origin: ['*'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 );
 
-// Mount all routes under /api prefix
+// Mount routes under /api
 app.route('/api', routes);
 
-// Error handling middleware
+// Root route
+app.get('/', (c) => c.text('Hono API is running! Try /api/...'));
+
+// Test route
+app.get('/api/test', (c) => c.text('Test route works!'));
+
+// Handle favicon
+app.get('/favicon.ico', (c) => c.text('No favicon', 404));
+
+// Error handling
 app.onError((err, c) => {
-  console.error(`${err}`);
+  console.error('Server error:', err);
   return c.json({ error: err.message }, 500);
 });
 
-// Start the server
-const startServer = async () => {
-  try {
-    await connectDB(); // Connect to MongoDB
-    serve(
-      {
-        fetch: app.fetch,
-        port: Number(env.PORT),
-      },
-      () => {
-        console.log(`Server running on port ${env.PORT}`);
-      }
-    );
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+// Lazy database connection
+let dbConnected = false;
+app.use('*', async (c, next) => {
+  if (!dbConnected) {
+    try {
+      console.log('Attempting MongoDB connection...');
+      await connectDB();
+      dbConnected = true;
+      console.log('MongoDB connected');
+    } catch (error) {
+      console.error('Failed to connect to MongoDB:', error);
+      return c.json({ error: 'Database connection failed' }, 500);
+    }
   }
-};
+  await next();
+});
 
-startServer();
+// Start server locally
+if (process.env.NODE_ENV !== 'production') {
+  serve(
+    {
+      fetch: app.fetch,
+      port: Number(env.PORT) || 3000,
+    },
+    () => {
+      console.log(`Server running on port ${env.PORT || 3000}`);
+    }
+  );
+}
+
+// Export for Vercel
+export default {
+  fetch: app.fetch,
+};

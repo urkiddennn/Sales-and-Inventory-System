@@ -10,12 +10,7 @@ const app = new Hono();
 // Apply CORS middleware before any routes
 app.use(
   '*',
-  cors({
-    origin: ['*'], // Explicitly allow the frontend origin
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Explicitly allow methods
-    allowHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
-    credentials: true, // Allow credentials (if needed, e.g., for cookies)
-  })
+  cors()
 );
 
 // Mount all routes under /api prefix

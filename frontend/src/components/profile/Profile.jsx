@@ -57,7 +57,7 @@ const Profile = () => {
         const fetchUserProfile = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/users`, {
+                const response = await fetch(`${import.meta.env.REACT_APP_API_URL}/users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",

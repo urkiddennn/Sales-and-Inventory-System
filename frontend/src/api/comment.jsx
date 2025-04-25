@@ -1,4 +1,4 @@
-const API_URL = "https://cg3solarsroductstading.vercel.app/api"
+const API_URL = "/api";
 import { message } from "antd";
 
 

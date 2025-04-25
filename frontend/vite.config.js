@@ -10,4 +10,13 @@ export default defineConfig({
         'process.env': process.env, // Expose process.env to the browser
     },
     envPrefix: 'REACT_APP_',
+    server: {
+        proxy: {
+            '/api': {
+                target: 'https://cg3solarsroductstading.vercel.app',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, '/api'),
+            },
+        },
+    },
 });

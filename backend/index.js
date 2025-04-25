@@ -6,29 +6,13 @@ import routes from './src/routes/index.js';
 
 const app = express();
 
-// CORS config
-const allowedOrigins = ['https://cg3-solar-products.vercel.app'];
-
-const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            console.log(`✅ CORS allowed for origin: ${origin}`);
-            callback(null, true);
-        } else {
-            console.log(`❌ CORS blocked for origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+// CORS config to allow all origins
+app.use(cors({
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-};
-
-// Apply CORS globally
-app.use(cors(corsOptions));
-
-// Handle preflight
-app.options('*', cors(corsOptions));
+}));
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));

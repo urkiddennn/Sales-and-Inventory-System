@@ -11,21 +11,17 @@
             "dest": "index.js"
         },
         {
-            "routes": [
-                {
-                    "src": "/api/comments",
-                    "methods": [
-                        "GET",
-                        "POST",
-                        "OPTIONS"
-                    ],
-                    "headers": {
-                        "Access-Control-Allow-Origin": "*",
-                        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-                        "Access-Control-Allow-Headers": "Content-Type,Authorization"
-                    }
-                }
-            ]
+            "src": "/api/comments",
+            "methods": [
+                "GET",
+                "POST",
+                "OPTIONS"
+            ],
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type,Authorization"
+            }
         }
     ]
 }

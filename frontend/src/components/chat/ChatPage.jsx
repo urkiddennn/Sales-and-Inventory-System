@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "../auth/AuthContext"
-import axios from "axios"
 import { message, Spin } from "antd"
 import { SendOutlined } from "@ant-design/icons"
 import { format } from "date-fns"
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = '/api'
 
 const ChatPage = () => {
     const { user } = useAuth()
@@ -19,10 +18,25 @@ const ChatPage = () => {
     // Fetch admin ID
     const fetchAdminId = useCallback(async () => {
         try {
-            const response = await axios.get(`${API_URL}/users/admin`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            const response = await fetch(`${API_URL}/users/admin`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
             })
-            setAdminId(response.data._id)
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type')
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.message || 'Failed to fetch admin details')
+                } else {
+                    const text = await response.text()
+                    console.error('Non-JSON response:', text)
+                    throw new Error('Server returned an unexpected response')
+                }
+            }
+            const data = await response.json()
+            setAdminId(data._id)
         } catch (error) {
             console.error("Fetch admin ID error:", error)
             message.error("Failed to fetch admin details")
@@ -33,10 +47,24 @@ const ChatPage = () => {
     const fetchChat = useCallback(async () => {
         if (!user || !adminId) return
         try {
-            const response = await axios.get(`${API_URL}/chats`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            const response = await fetch(`${API_URL}/chats`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${localStorage.get("token")}`,
+                },
             })
-            const chats = response.data
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type')
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.message || 'Failed to fetch chat')
+                } else {
+                    const text = await response.text()
+                    console.error('Non-JSON response:', text)
+                    throw new Error('Server returned an unexpected response')
+                }
+            }
+            const chats = await response.json()
             const adminChat = chats.find((chat) => chat.participants.some((p) => p._id === adminId)) || { messages: [] }
             setAdminChat(adminChat)
         } catch (error) {
@@ -50,12 +78,27 @@ const ChatPage = () => {
         if (!content.trim() || !user || !adminId) return
         setIsSending(true)
         try {
-            const response = await axios.post(
-                `${API_URL}/chats`,
-                { recipientId: adminId, content },
-                { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } },
-            )
-            setAdminChat(response.data)
+            const response = await fetch(`${API_URL}/chats`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify({ recipientId: adminId, content }),
+            })
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type')
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.message || 'Failed to send message')
+                } else {
+                    const text = await response.text()
+                    console.error('Non-JSON response:', text)
+                    throw new Error('Server returned an unexpected response')
+                }
+            }
+            const data = await response.json()
+            setAdminChat(data)
             setNewMessage("")
         } catch (error) {
             message.error("Failed to send message")
@@ -95,8 +138,7 @@ const ChatPage = () => {
                         adminChat.messages.map((msg) => (
                             <div key={msg._id} className={`flex ${msg.sender._id === user?.id ? "justify-end" : "justify-start"}`}>
                                 <div
-                                    className={`p-3 rounded-lg max-w-[80%] ${msg.sender._id === user?.id ? "bg-blue-500 text-white" : "bg-white shadow-sm"
-                                        }`}
+                                    className={`p-3 rounded-lg max-w-[80%] ${msg.sender._id === user?.id ? "bg-blue-500 text-white" : "bg-white shadow-sm"}`}
                                 >
                                     <p>{msg.content}</p>
                                     <p className={`text-xs mt-1 ${msg.sender._id === user?.id ? "text-blue-100" : "text-gray-400"}`}>

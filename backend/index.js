@@ -9,7 +9,7 @@ const app = express();
 // Apply CORS middleware
 app.use(
     cors({
-        origin: ['https://cg3-solar-products.vercel.app/'],
+        origin: ['https://cg3-solar-products.vercel.app'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     })

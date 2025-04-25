@@ -1,7 +1,7 @@
 
 import { message } from 'antd';
 
-const API_URL = '/api'
+const API_URL = import.meta.env.VITE_API_URL || "MISSING_ENV";
 
 // Cart APIs
 export const addToCart = async (token, cartData) => {

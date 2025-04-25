@@ -1,10 +1,11 @@
 // src/api.js
 import { message } from "antd";
 
-const REACT_APP_URI = '/api';
+const REACT_APP_URI = import.meta.env.VITE_API_URL || "MISSING_ENV";
 
 export const fetchProducts = async () => {
     try {
+        console.log("REACT_APP_URI is:", REACT_APP_URI);
         console.log("Fetching products from:", `${REACT_APP_URI}/products`);
         const response = await fetch(`${REACT_APP_URI}/products`);
 

@@ -9,7 +9,7 @@ export default defineConfig({
     define: {
         'process.env': process.env, // Expose process.env to the browser
     },
-    envPrefix: 'REACT_APP_URI',
+    envPrefix: 'VITE_API_URL',
 
     server: {
         proxy: {

@@ -10,10 +10,12 @@ const Reviews = () => {
     useEffect(() => {
         const loadReviews = async () => {
             setLoading(true);
+
             try {
                 const data = await getAllComments();
+
                 setReviews(data || []);
-                console.log(data)
+                console.log("Data reviews", data)
             } catch (error) {
                 console.error('Error fetching reviews:', error);
                 message.error(error.message || 'Failed to load reviews');

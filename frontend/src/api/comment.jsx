@@ -42,21 +42,27 @@ export const getProductComments = async (token, productId) => {
         throw error;
     }
 };
-
-export const getAllComments = async (token) => {
+export const getAllComments = async () => {
     try {
+        console.log('API_URL:', API_URL);
         console.log('Fetching all comments from:', `${API_URL}/comments`);
-        const response = await fetch(`${API_URL}/comments`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await fetch(`${API_URL}/comments`);
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to fetch comments');
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to fetch comments');
+            } else {
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned an unexpected response');
+            }
         }
         return await response.json();
     } catch (error) {
+        console.error('Error in getAllComments:', error);
         message.error(error.message || 'An unexpected error occurred');
         throw error;
     }

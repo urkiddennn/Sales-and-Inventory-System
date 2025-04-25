@@ -6,39 +6,52 @@ import routes from './src/routes/index.js';
 
 const app = express();
 
-// Apply CORS middleware
-app.use(
-    cors({
-        origin: ['https://cg3-solar-products.vercel.app'],
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    })
-);
+// CORS config
+const allowedOrigins = ['https://cg3-solar-products.vercel.app'];
 
-app.options('*', cors());
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            console.log(`✅ CORS allowed for origin: ${origin}`);
+            callback(null, true);
+        } else {
+            console.log(`❌ CORS blocked for origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+};
 
-// Middleware for parsing JSON and URL-encoded bodies
-app.use(express.json({ limit: '10mb' })); // Increased to 10mb
+// Apply CORS globally
+app.use(cors(corsOptions));
+
+// Handle preflight
+app.options('*', cors(corsOptions));
+
+// Body parsers
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Mount all routes under /api prefix
+// Routes
 app.use('/api', routes);
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('❌', err.stack);
     res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
-// Start the server
+// Start server
 const startServer = async () => {
     try {
-        await connectDB(); // Connect to MongoDB
+        await connectDB();
         app.listen(Number(env.PORT), () => {
-            console.log(`Server running on port ${env.PORT}`);
+            console.log(`🚀 Server running on port ${env.PORT}`);
         });
     } catch (error) {
-        console.error('Failed to start server:', error);
+        console.error('❌ Failed to start server:', error);
         process.exit(1);
     }
 };

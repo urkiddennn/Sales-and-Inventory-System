@@ -30,7 +30,7 @@ import {
     PhoneOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
-
+const REACT_APP_URI = import.meta.env.VITE_API_URL || "MISSING_ENV";
 const { Title, Text } = Typography;
 
 const Profile = () => {
@@ -58,7 +58,7 @@ const Profile = () => {
         const fetchUserProfile = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await fetch(`/api/users`, {
+                const response = await fetch(`${REACT_APP_URI}/users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",

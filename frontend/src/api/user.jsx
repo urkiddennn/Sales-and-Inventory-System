@@ -1,7 +1,7 @@
 // src/api/user.js
 import { message } from "antd";
 
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || "MISSING_ENV";;
 
 export const fetchUsers = async (token) => {
     try {

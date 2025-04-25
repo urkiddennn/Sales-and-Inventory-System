@@ -9,7 +9,7 @@ const app = express();
 // Apply CORS middleware
 app.use(
     cors({
-        origin: ['http://localhost:5173'],
+        origin: ['http://localhost:5173' || 'https://sales-and-inventory-system.vercel.app'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     })

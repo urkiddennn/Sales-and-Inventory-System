@@ -1,7 +1,7 @@
 
 import { message } from 'antd';
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = '/api'
 
 // Cart APIs
 export const addToCart = async (token, cartData) => {
@@ -116,7 +116,7 @@ export const clearCart = async (token) => {
 export const createOrder = async (token, orderData) => {
     console.log("Sending order data:", JSON.stringify(orderData, null, 2));
     try {
-        const response = await fetch("http://localhost:3000/api/orders", {
+        const response = await fetch(`${API_URL}/orders`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

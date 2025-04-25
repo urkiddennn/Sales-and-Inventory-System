@@ -1,7 +1,7 @@
 // src/api.js
 import { message } from "antd";
 
-const REACT_APP_URI = 'http://localhost:3000/api';
+const REACT_APP_URI = '/api';
 
 export const fetchProducts = async () => {
     try {
@@ -22,7 +22,7 @@ export const fetchProducts = async () => {
 };
 
 export const createProduct = async (token, productData) => {
-    const response = await fetch('http://localhost:3000/api/products', {
+    const response = await fetch(`${REACT_APP_URI}/products`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -39,7 +39,7 @@ export const createProduct = async (token, productData) => {
 };
 
 export const updateProduct = async (token, id, productData) => {
-    const response = await fetch(`http://localhost:3000/api/products/${id}`, {
+    const response = await fetch(`${REACT_APP_URI}/products/${id}`, {
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,

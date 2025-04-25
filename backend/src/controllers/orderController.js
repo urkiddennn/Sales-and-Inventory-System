@@ -63,6 +63,11 @@ export const updateOrderStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
+        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        if (!status || !validStatuses.includes(status)) {
+            return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        }
+
         const order = await Order.findById(id);
         if (!order) return res.status(404).json({ error: 'Order not found' });
 
@@ -71,7 +76,7 @@ export const updateOrderStatus = async (req, res) => {
         res.json(order);
     } catch (error) {
         console.error('Error in updateOrderStatus:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 };
 

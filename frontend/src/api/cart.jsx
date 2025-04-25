@@ -212,7 +212,7 @@ export const fetchOrderById = async (token, orderId) => {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to fetch order');
         }
-        return response.json();
+        return response.json(); 
     } catch (error) {
         message.error(error.message || 'An unexpected error occurred');
         throw error;

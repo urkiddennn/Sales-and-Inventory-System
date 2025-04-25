@@ -3,7 +3,6 @@ import cors from 'cors';
 import { connectDB } from './src/config/db.js';
 import { env } from './src/config/env.js';
 import routes from './src/routes/index.js';
-import upload from './src/config/multerConfig.js'; // No longer needed here
 
 const app = express();
 
@@ -12,8 +11,7 @@ app.use(
     cors({
         origin: ['http://localhost:5173'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-        allowedHeaders: ['Content-Type'],
-
+        allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
 
@@ -23,16 +21,11 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// >>> REMOVE THESE INCORRECT LINES <<<
-app.post('/api/auth/register', upload.single('profilePicture'), routes);
-app.post('/api/products', upload.single('image'), routes);
-app.put('/api/products/:id', upload.single('image'), routes);
-app.put('/api/users/:id', upload.single('profilePicture'), routes);
-
-// app.post('/api/details', upload.single('image'), routes);
+// Serve static files from the uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // Mount all routes under /api prefix
-app.use('/api', routes); // This line is correct
+app.use('/api', routes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

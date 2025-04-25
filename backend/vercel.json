@@ -11,7 +11,20 @@
             "dest": "index.js"
         },
         {
-            "src": "/api/auth/.*",
+            "src": "/api/auth/login",
+            "methods": [
+                "POST",
+                "OPTIONS"
+            ],
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST,OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type,Authorization",
+                "Access-Control-Allow-Credentials": "true"
+            }
+        },
+        {
+            "src": "/api/auth/register",
             "methods": [
                 "POST",
                 "OPTIONS"

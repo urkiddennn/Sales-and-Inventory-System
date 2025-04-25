@@ -1,4 +1,4 @@
-const API_URL = process.env.VITE_API_URL;
+const API_URL = '/api';
 
 
 export const createSale = async (token, saleData) => {

@@ -10,12 +10,10 @@ const Reviews = () => {
     useEffect(() => {
         const loadReviews = async () => {
             setLoading(true);
-
             try {
-                const data = await getAllComments();
-
+                const data = await getAllComments(); // No token needed
                 setReviews(data || []);
-                console.log("Data reviews", data)
+                console.log('Data reviews:', data);
             } catch (error) {
                 console.error('Error fetching reviews:', error);
                 message.error(error.message || 'Failed to load reviews');
@@ -52,27 +50,22 @@ const Reviews = () => {
                                     </svg>
                                 ))}
                             </div>
-
                             <div className="flex justify-start items-center mt-3">
-
                                 <Avatar
                                     size={70}
                                     src={review.user?.profileUrl}
                                     icon={!review.user?.profileUrl && <UserOutlined />}
                                     style={{
-                                        backgroundColor: review.user?.profileUrl,
+                                        backgroundColor: review.user?.profileUrl ? undefined : '#1890ff',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
-                                >
-
-                                </Avatar>
-                                <div className='ml-4 '>
+                                />
+                                <div className="ml-4">
                                     <p className="text-gray-700">{review.content}</p>
                                     <p className="text-gray-500 text-lg font-bold">{review.user?.name || 'Anonymous'}</p>
                                 </div>
-
                             </div>
                         </div>
                     ))}

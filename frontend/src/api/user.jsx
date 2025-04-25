@@ -1,7 +1,7 @@
 // src/api/user.js
 import { message } from "antd";
 
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.VITE_API_URL;
 
 export const fetchUsers = async (token) => {
     try {

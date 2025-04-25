@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = "https://cg3solarsroductstading.vercel.app/api"
 import { message } from "antd";
 export const addComment = async (token, commentData) => {
     try {

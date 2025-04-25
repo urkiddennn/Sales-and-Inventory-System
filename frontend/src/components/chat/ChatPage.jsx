@@ -7,7 +7,7 @@ import { message, Spin } from "antd"
 import { SendOutlined } from "@ant-design/icons"
 import { format } from "date-fns"
 
-const API_URL = import.meta.env.REACT_APP_API_URL
+const API_URL = import.meta.env.VITE_API_URL
 
 const ChatPage = () => {
     const { user } = useAuth()

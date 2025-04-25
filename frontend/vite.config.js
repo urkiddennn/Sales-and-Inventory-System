@@ -10,11 +10,7 @@ export default defineConfig({
         'process.env': process.env, // Expose process.env to the browser
     },
     envPrefix: 'REACT_APP_URI',
-    build: {
-        rollupOptions: {
-            external: ['recharts'],
-        },
-    },
+
     server: {
         proxy: {
             '/api': {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Row, Col, Card, Statistic, Table, Spin, message } from "antd";
 import {
@@ -7,21 +8,18 @@ import {
     DollarOutlined,
 } from "@ant-design/icons";
 import {
-    AreaChart,
-    Area,
-    BarChart,
-    Bar,
-    PieChart,
-    Pie,
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
+    Chart as ChartJS,
+    ArcElement,
+    BarElement,
+    LineElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
     Tooltip,
-    ResponsiveContainer,
-    Cell,
-} from "recharts";
+    Legend,
+    Filler,
+} from "chart.js";
+import { Pie, Bar, Line } from "react-chartjs-2";
 import {
     getSales,
     fetchProducts,
@@ -29,6 +27,19 @@ import {
     getOrders,
     getChats,
 } from "../../api"; // Adjust the import path based on your project structure
+
+// Register Chart.js components
+ChartJS.register(
+    ArcElement,
+    BarElement,
+    LineElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    Tooltip,
+    Legend,
+    Filler
+);
 
 const AdminDashboard = () => {
     // State for dashboard data
@@ -248,6 +259,120 @@ const AdminDashboard = () => {
     // Colors for charts
     const COLORS = ["#15803d", "#eab308", "#3b82f6", "#ef4444", "#8b5cf6"];
 
+    // Chart.js data and options
+    const salesChartData = {
+        labels: salesData.map((item) => item.name),
+        datasets: [
+            {
+                label: "Sales ($)",
+                data: salesData.map((item) => item.sales),
+                backgroundColor: "rgba(21, 128, 61, 0.2)", // #15803d with opacity
+                borderColor: "#15803d",
+                fill: true,
+                tension: 0.4, // Smooth curves
+            },
+        ],
+    };
+
+    const salesChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: "top" },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `$${context.parsed.y.toFixed(2)}`,
+                },
+            },
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { borderDash: [3, 3] } },
+        },
+    };
+
+    const categoryChartData = {
+        labels: categoryData.map((item) => item.name),
+        datasets: [
+            {
+                data: categoryData.map((item) => item.value),
+                backgroundColor: COLORS,
+            },
+        ],
+    };
+
+    const categoryChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: "right" },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.parsed.toFixed(1)}%`,
+                },
+            },
+        },
+    };
+
+    const topProductsChartData = {
+        labels: topProductsData.map((item) => item.name),
+        datasets: [
+            {
+                label: "Sales (Units)",
+                data: topProductsData.map((item) => item.sales),
+                backgroundColor: "#eab308",
+            },
+        ],
+    };
+
+    const topProductsChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: "top" },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.parsed.y} units`,
+                },
+            },
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { borderDash: [3, 3] } },
+        },
+    };
+
+    const userRegistrationChartData = {
+        labels: userRegistrationData.map((item) => item.name),
+        datasets: [
+            {
+                label: "New Registrations",
+                data: userRegistrationData.map((item) => item.users),
+                borderColor: "#3b82f6",
+                backgroundColor: "#3b82f6",
+                fill: false,
+                tension: 0.4,
+            },
+        ],
+    };
+
+    const userRegistrationChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: "top" },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.parsed.y} users`,
+                },
+            },
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { borderDash: [3, 3] } },
+        },
+    };
+
     // Render loading or error state
     if (loading) {
         return (
@@ -313,54 +438,22 @@ const AdminDashboard = () => {
             <Row gutter={[16, 16]} className="mt-6">
                 <Col xs={24} lg={16}>
                     <Card title="Sales Overview">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart
-                                data={salesData}
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip formatter={(value) => [`$${value.toFixed(2)}`, "Sales"]} />
-                                <Area
-                                    type="monotone"
-                                    dataKey="sales"
-                                    stroke="#15803d"
-                                    fill="#15803d"
-                                    fillOpacity={0.2}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        <div style={{ height: 300 }}>
+                            <Line
+                                data={salesChartData}
+                                options={salesChartOptions}
+                            />
+                        </div>
                     </Card>
                 </Col>
                 <Col xs={24} lg={8}>
                     <Card title="Product Categories">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={categoryData}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                    label={({ name, percent }) =>
-                                        `${name} ${(percent * 100).toFixed(0)}%`
-                                    }
-                                >
-                                    {categoryData.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={COLORS[index % COLORS.length]}
-                                        />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    formatter={(value) => [`${value.toFixed(1)}%`, "Percentage"]}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        <div style={{ height: 300 }}>
+                            <Pie
+                                data={categoryChartData}
+                                options={categoryChartOptions}
+                            />
+                        </div>
                     </Card>
                 </Col>
             </Row>
@@ -369,36 +462,22 @@ const AdminDashboard = () => {
             <Row gutter={[16, 16]} className="mt-6">
                 <Col xs={24} lg={12}>
                     <Card title="Top Selling Products">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart
-                                data={topProductsData}
-                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip formatter={(value) => [`${value} units`, "Sales"]} />
-                                <Bar dataKey="sales" fill="#eab308" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <div style={{ height: 300 }}>
+                            <Bar
+                                data={topProductsChartData}
+                                options={topProductsChartOptions}
+                            />
+                        </div>
                     </Card>
                 </Col>
                 <Col xs={24} lg={12}>
                     <Card title="User Registration Trend">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart
-                                data={userRegistrationData}
-                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip
-                                    formatter={(value) => [`${value} users`, "New Registrations"]}
-                                />
-                                <Line type="monotone" dataKey="users" stroke="#3b82f6" />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <div style={{ height: 300 }}>
+                            <Line
+                                data={userRegistrationChartData}
+                                options={userRegistrationChartOptions}
+                            />
+                        </div>
                     </Card>
                 </Col>
             </Row>

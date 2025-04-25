@@ -11,8 +11,6 @@ export const CartProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [cart, setCart] = useState({ items: [] });
 
-
-
     useEffect(() => {
         console.log("CartProvider: useEffect running, isAuthenticated:", isAuthenticated);
         if (isAuthenticated) {
@@ -141,7 +139,7 @@ export const CartProvider = ({ children }) => {
             // Fallback to individual removes
             for (const item of cart.items) {
                 if (!item.product?._id) {
-                    console.warn('CartProvider: Invalid product ID in cart item:', item);
+                    console.warn('CartProvider: Invalid product in cart item:', item);
                     continue;
                 }
                 try {

@@ -128,21 +128,35 @@ const CartPage = () => {
             if (!cart.items || cart.items.length === 0) {
                 throw new Error("Cart is empty");
             }
-            console.log("Cart items:", cart.items); // Log cart items
+
+            const shippingAddress = {
+                fullName: "John Doe",
+                street: "123 Main St",
+                city: "Anytown",
+                state: "CA",
+                zipCode: "12345",
+            };
+
+            // Validate shipping address
+            if (
+                !shippingAddress.fullName ||
+                !shippingAddress.street ||
+                !shippingAddress.city ||
+                !shippingAddress.state ||
+                !shippingAddress.zipCode
+            ) {
+                throw new Error("All shipping address fields are required");
+            }
+
             const orderData = {
                 products: cart.items.map((item) => ({
                     product: item.product._id,
                     quantity: item.quantity,
                     price: item.product.isOnSale ? item.product.salePrice : item.product.price,
                 })),
-                shippingAddress: {
-                    fullName: "John Doe",
-                    street: "123 Main St",
-                    city: "Anytown",
-                    state: "CA",
-                    zipCode: "12345",
-                },
+                shippingAddress,
             };
+
             console.log("CartPage: Creating order:", orderData);
             const order = await createOrder(token, orderData);
             await clearCart();

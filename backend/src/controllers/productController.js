@@ -3,7 +3,7 @@ import cloudinary from '../config/cloudinary.js';
 
 export const createProduct = async (req, res) => {
     try {
-        const { name, description, price, stock, category, isOnSale, salePrice, ratings } = req.body;
+        const { name, description, price, stock, category, isOnSale, salePrice, ratings, image } = req.body;
 
         console.log('Received request body:', req.body);
 
@@ -19,13 +19,17 @@ export const createProduct = async (req, res) => {
             return res.status(400).json({ error: 'Price and stock must be valid numbers' });
         }
 
-        // Handle file upload
+        // Handle image upload to Cloudinary
         let imageUrl;
-        if (req.file) {
-            const uploadResult = await cloudinary.uploader.upload(req.file.path, { folder: 'products' });
+        if (image && typeof image === 'string' && image.startsWith('data:image/')) {
+            console.log('Uploading base64 image to Cloudinary...');
+            const uploadResult = await cloudinary.uploader.upload(image, {
+                folder: 'products',
+            });
             imageUrl = uploadResult.secure_url;
-        } else if (req.body.image && typeof req.body.image === 'string') {
-            imageUrl = req.body.image; // Use existing URL if provided
+            console.log('Uploaded image URL:', imageUrl);
+        } else if (image && typeof image === 'string' && image.startsWith('http')) {
+            imageUrl = image; // Use existing URL if provided
         }
 
         // Create product
@@ -46,6 +50,64 @@ export const createProduct = async (req, res) => {
     } catch (error) {
         console.error('Error in createProduct:', error);
         return res.status(400).json({ error: error.message || 'Failed to create product' });
+    }
+};
+
+export const updateProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, stock, category, isOnSale, salePrice, ratings, image } = req.body;
+
+        console.log('Received update product body:', req.body);
+
+        // Validate required fields
+        if (!name || !price || !stock) {
+            return res.status(400).json({ error: 'Name, price, and stock are required' });
+        }
+
+        // Parse numeric fields
+        const priceNum = parseFloat(price);
+        const stockNum = parseInt(stock, 10);
+        if (isNaN(priceNum) || isNaN(stockNum)) {
+            return res.status(400).json({ error: 'Price and stock must be valid numbers' });
+        }
+
+        // Handle image upload to Cloudinary
+        let imageUrl;
+        if (image && typeof image === 'string' && image.startsWith('data:image/')) {
+            console.log('Uploading base64 image to Cloudinary...');
+            const uploadResult = await cloudinary.uploader.upload(image, {
+                folder: 'products',
+            });
+            imageUrl = uploadResult.secure_url;
+            console.log('Uploaded image URL:', imageUrl);
+        } else if (image && typeof image === 'string' && image.startsWith('http')) {
+            imageUrl = image; // Use existing URL if provided
+        }
+
+        const updates = {
+            name,
+            description: description || undefined,
+            price: priceNum,
+            stock: stockNum,
+            category: category || undefined,
+            imageUrl,
+            isOnSale: isOnSale === 'true' || isOnSale === true,
+            salePrice: (isOnSale === 'true' || isOnSale === true) && salePrice ? parseFloat(salePrice) : undefined,
+            ratings: ratings ? parseFloat(ratings) : undefined,
+        };
+
+        console.log('Applying updates:', updates);
+
+        const product = await Product.findByIdAndUpdate(id, updates, { new: true });
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        return res.json(product);
+    } catch (error) {
+        console.error('Error updating product:', error);
+        return res.status(400).json({ error: error.message || 'Failed to update product' });
     }
 };
 
@@ -101,60 +163,6 @@ export const getSaleProducts = async (req, res) => {
     } catch (error) {
         console.error('Error in getSaleProducts:', error);
         return res.status(500).json({ error: error.message });
-    }
-};
-
-export const updateProduct = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, description, price, stock, category, isOnSale, salePrice, ratings } = req.body;
-
-        console.log('Received update product body:', req.body);
-
-        // Validate required fields
-        if (!name || !price || !stock) {
-            return res.status(400).json({ error: 'Name, price, and stock are required' });
-        }
-
-        // Parse numeric fields
-        const priceNum = parseFloat(price);
-        const stockNum = parseInt(stock, 10);
-        if (isNaN(priceNum) || isNaN(stockNum)) {
-            return res.status(400).json({ error: 'Price and stock must be valid numbers' });
-        }
-
-        // Handle file upload
-        let imageUrl;
-        if (req.file) {
-            const uploadResult = await cloudinary.uploader.upload(req.file.path, { folder: 'products' });
-            imageUrl = uploadResult.secure_url;
-        } else if (req.body.image && typeof req.body.image === 'string') {
-            imageUrl = req.body.image; // Use existing URL if provided
-        }
-
-        const updates = {
-            name,
-            description: description || undefined,
-            price: priceNum,
-            stock: stockNum,
-            category: category || undefined,
-            imageUrl,
-            isOnSale: isOnSale === 'true' || isOnSale === true,
-            salePrice: (isOnSale === 'true' || isOnSale === true) && salePrice ? parseFloat(salePrice) : undefined,
-            ratings: ratings ? parseFloat(ratings) : undefined,
-        };
-
-        console.log('Applying updates:', updates);
-
-        const product = await Product.findByIdAndUpdate(id, updates, { new: true });
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        return res.json(product);
-    } catch (error) {
-        console.error('Error updating product:', error);
-        return res.status(400).json({ error: error.message || 'Failed to update product' });
     }
 };
 

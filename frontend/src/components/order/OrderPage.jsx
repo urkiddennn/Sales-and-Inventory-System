@@ -90,8 +90,8 @@ const OrderPage = () => {
     const calculateSubtotal = () => {
         if (!order || !order.products) return 0;
         return order.products.reduce((total, item) => total + item.price * item.quantity, 0);
-    };
 
+    };
     const handleCancelOrder = async () => {
         console.log("Initiating order cancellation for ID:", id);
         setCancelling(true);
@@ -147,6 +147,7 @@ const OrderPage = () => {
     const shippingCost = 5.99;
     const tax = calculateSubtotal() * 0.08;
     const total = calculateSubtotal() + shippingCost + tax;
+    console.log(order)
 
     if (loading) {
         return (

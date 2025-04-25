@@ -1,7 +1,7 @@
 
 import { message } from 'antd';
 
-const API_URL = '/api'
+const API_URL = 'http://localhost:3000/api'
 
 // Cart APIs
 export const addToCart = async (token, cartData) => {
@@ -112,39 +112,25 @@ export const clearCart = async (token) => {
         throw error;
     }
 };
-
-// Order APIs
+// In api.js or wherever createOrder is defined
 export const createOrder = async (token, orderData) => {
+    console.log("Sending order data:", JSON.stringify(orderData, null, 2));
     try {
-        console.log('Creating order:', orderData, { token });
-        const response = await fetch(`${API_URL}/orders`, {
-            method: 'POST',
+        const response = await fetch("http://localhost:3000/api/orders", {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(orderData),
         });
-
-        const text = await response.text();
-        console.log('Raw response:', text);
-
+        const data = await response.json();
         if (!response.ok) {
-            let errorData;
-            try {
-                errorData = JSON.parse(text);
-            } catch (e) {
-                console.error('Failed to parse error response:', text);
-                throw new Error('Server returned invalid JSON');
-            }
-            console.error('Error response:', errorData);
-            throw new Error(errorData.message || 'Failed to create order');
+            throw new Error(data.message || "Failed to create order");
         }
-
-        return JSON.parse(text);
+        return data;
     } catch (error) {
-        console.error('Create order error:', error);
-        message.error(error.message || 'An unexpected error occurred');
+        console.error("Create order error:", error);
         throw error;
     }
 };
@@ -212,7 +198,7 @@ export const fetchOrderById = async (token, orderId) => {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to fetch order');
         }
-        return response.json(); 
+        return response.json();
     } catch (error) {
         message.error(error.message || 'An unexpected error occurred');
         throw error;
@@ -229,15 +215,22 @@ export const updateOrderStatus = async (token, orderId, statusData) => {
             },
             body: JSON.stringify(statusData),
         });
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse response:', text);
+            throw new Error('Server returned invalid JSON');
+        }
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Update order status error response:', { status: response.status, errorData });
+            console.error('Update order status error response:', { status: response.status, errorData: data });
             if (response.status === 401) {
                 throw new Error('Unauthorized: Please log in again');
             }
-            throw new Error(errorData.message || 'Failed to update order status');
+            throw new Error(data.message || 'Failed to update order status');
         }
-        return response.json();
+        return data;
     } catch (error) {
         console.error('Update order status error:', error);
         message.error(error.message || 'An unexpected error occurred');

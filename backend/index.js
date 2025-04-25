@@ -18,11 +18,8 @@ app.use(
 app.options('*', cors());
 
 // Middleware for parsing JSON and URL-encoded bodies
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased to 10mb
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files from the uploads directory
-app.use('/uploads', express.static('uploads'));
 
 // Mount all routes under /api prefix
 app.use('/api', routes);

@@ -1,6 +1,5 @@
 import express from 'express';
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
-
 import * as authController from '../controllers/authController.js';
 import * as productController from '../controllers/productController.js';
 import * as saleController from '../controllers/saleController.js';
@@ -13,8 +12,6 @@ import * as userController from '../controllers/userController.js';
 
 const router = express.Router();
 
-
-
 // Public routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
@@ -25,12 +22,12 @@ router.post('/comments', authMiddleware, commentController.addComment);
 router.get('/comments/:productId', authMiddleware, commentController.getProductComments);
 
 // Public product routes
-router.get('/products', productController.getProducts);
+router.get('/products', productController.getProducts); // Remove
 router.get('/products/:id', productController.getProductById);
 router.get('/products/sale', productController.getSaleProducts);
-router.post('/products', productController.createProduct);
-router.delete('/products/:id', productController.deleteProduct);
-router.put('/products/:id', productController.updateProduct);
+router.post('/products', authMiddleware, adminMiddleware, productController.createProduct);
+router.delete('/products/:id', authMiddleware, adminMiddleware, productController.deleteProduct);
+router.put('/products/:id', authMiddleware, adminMiddleware, productController.updateProduct);
 
 // Protected routes
 router.use('/sales', authMiddleware);
@@ -40,7 +37,7 @@ router.use('/cart', authMiddleware);
 router.use('/users', authMiddleware);
 
 // Protected product routes
-router.put('/products/:id/sale', authMiddleware, productController.updateSaleStatus);
+router.put('/products/:id/sale', authMiddleware, adminMiddleware, productController.updateSaleStatus);
 
 // Order routes
 router.post('/orders', orderController.createOrder);
@@ -71,8 +68,5 @@ router.delete('/users/:id', userController.deleteUser);
 router.get('/users/admin', userController.getAdminUser);
 router.get('/getAllUsers', userController.getAllUsers);
 router.get('/users/:id', adminMiddleware, userController.getUserById);
-
-// Details route
-
 
 export default router;

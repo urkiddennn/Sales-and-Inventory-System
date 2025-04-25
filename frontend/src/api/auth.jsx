@@ -1,4 +1,4 @@
-const API_URL = '/api';
+const API_URL = 'http://localhost:3000/api';
 
 export const login = async (credentials) => {
     const controller = new AbortController();
@@ -46,12 +46,14 @@ export const login = async (credentials) => {
 
 export const register = async (userData) => {
     console.log(`Attempting registration to ${API_URL}/auth/register`);
+    console.log(userData)
     try {
         console.log("Register request data:", Array.from(userData.entries()));
         const response = await fetch(`${API_URL}/auth/register`, {
             method: "POST",
             body: userData,
         });
+
 
         let responseBody;
         try {

@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import cloudinary from '../config/cloudinary.js';
 import formidable from 'formidable';
 import fs from 'fs';
+import path from 'path';
 
 export const login = async (req, res) => {
     try {
@@ -53,27 +54,39 @@ export const login = async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 export const register = async (req, res) => {
+    console.log('Starting registration process', { headers: req.headers['content-type'] });
+
     // Create a formidable form instance with options
     const form = formidable({
         multiples: false, // Single file upload
         keepExtensions: true, // Preserve file extensions
-        uploadDir: './uploads', // Directory for temporary files
+        uploadDir: '/tmp/uploads', // Use /tmp for Vercel
         maxFileSize: 2 * 1024 * 1024, // 2MB limit
     });
 
     // Ensure upload directory exists
-    if (!fs.existsSync('./uploads')) {
-        fs.mkdirSync('./uploads', { recursive: true });
+    const uploadDir = '/tmp/uploads';
+    try {
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+            console.log('Created upload directory:', uploadDir);
+        }
+    } catch (dirErr) {
+        console.error('Failed to create upload directory:', dirErr);
+        return res.status(500).json({ error: 'Server file system error' });
     }
 
     form.parse(req, async (err, fields, files) => {
         if (err) {
             console.error('Formidable parse error:', err);
-            return res.status(500).json({ error: 'Failed to process form data' });
+            return res.status(500).json({ error: 'Failed to process form data', details: err.message });
         }
 
         try {
+            console.log('Parsed form data:', { fields, files: Object.keys(files) });
+
             // Extract fields (formidable v3 returns fields as arrays)
             const name = fields.name?.[0];
             const email = fields.email?.[0];
@@ -86,7 +99,7 @@ export const register = async (req, res) => {
             const mobileNumber = fields.mobileNumber?.[0];
             const role = fields.role?.[0];
 
-            console.log('Received signup body:', {
+            console.log('Extracted signup body:', {
                 name,
                 email,
                 password: '[REDACTED]',
@@ -94,10 +107,6 @@ export const register = async (req, res) => {
                 mobileNumber,
                 role,
             });
-
-            // Log formidable raw data for debugging
-            console.log('Formidable fields:', fields);
-            console.log('Formidable files:', files);
 
             // Validate required fields
             const missingFields = [];
@@ -127,8 +136,10 @@ export const register = async (req, res) => {
             }
 
             // Check if email exists
+            console.log('Checking for existing user with email:', email);
             const existingUser = await User.findOne({ email: email.toLowerCase() });
             if (existingUser) {
+                console.log('Email already exists:', email);
                 return res.status(409).json({ error: 'Email already exists' });
             }
 
@@ -136,27 +147,39 @@ export const register = async (req, res) => {
             let profileUrl = '';
             const profilePicture = files.profilePicture?.[0];
             if (profilePicture) {
-                console.log('Uploading profile picture to Cloudinary:', profilePicture.originalFilename);
-                const uploadResult = await cloudinary.uploader.upload(profilePicture.filepath, {
-                    folder: 'user_profiles',
-                });
-                profileUrl = uploadResult.secure_url;
-                console.log('Set profileUrl:', profileUrl);
+                console.log('Uploading profile picture:', profilePicture.originalFilename, profilePicture.filepath);
+                try {
+                    const uploadResult = await cloudinary.uploader.upload(profilePicture.filepath, {
+                        folder: 'user_profiles',
+                    });
+                    profileUrl = uploadResult.secure_url;
+                    console.log('Cloudinary upload successful, profileUrl:', profileUrl);
+                } catch (uploadErr) {
+                    console.error('Cloudinary upload error:', uploadErr);
+                    return res.status(500).json({ error: 'Failed to upload profile picture', details: uploadErr.message });
+                }
                 // Clean up temporary file
                 try {
                     fs.unlinkSync(profilePicture.filepath);
+                    console.log('Deleted temporary file:', profilePicture.filepath);
                 } catch (unlinkErr) {
                     console.error('Error deleting temporary file:', unlinkErr);
                 }
+            } else {
+                console.log('No profile picture provided');
             }
 
             // Restrict admin role
             const userRole = role === 'admin' ? 'user' : role || 'user';
             console.log(`Registering ${email} with role: ${userRole}`);
 
+            // Hash password
+            console.log('Hashing password');
             const hashedPassword = await bcrypt.hash(password, 10);
-            console.log('Hashed password:', hashedPassword);
+            console.log('Password hashed successfully');
 
+            // Create user
+            console.log('Creating new user');
             const user = new User({
                 name,
                 email: email.toLowerCase(),
@@ -167,17 +190,13 @@ export const register = async (req, res) => {
                 role: userRole,
             });
 
+            // Save user
+            console.log('Saving user to database');
             await user.save();
-            console.log('Saved user:', {
-                id: user._id,
-                email: user.email,
-                name,
-                address: user.address,
-                mobileNumber,
-                profileUrl,
-                role: user.role,
-            });
+            console.log('User saved:', { id: user._id, email: user.email });
 
+            // Generate JWT
+            console.log('Generating JWT');
             const payload = {
                 id: user._id.toString(),
                 email: user.email,
@@ -192,6 +211,7 @@ export const register = async (req, res) => {
                 return res.status(500).json({ error: 'Internal server configuration error' });
             }
             const token = sign(payload, secret);
+            console.log('JWT generated successfully');
 
             return res.status(201).json({
                 token,
@@ -206,7 +226,12 @@ export const register = async (req, res) => {
                 },
             });
         } catch (error) {
-            console.error('Registration Error:', error);
+            console.error('Registration Error:', {
+                message: error.message,
+                stack: error.stack,
+                fields,
+                files: Object.keys(files),
+            });
             return res.status(500).json({ error: error.message || 'Internal Server Error' });
         }
     });

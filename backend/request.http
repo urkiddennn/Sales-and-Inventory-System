@@ -2,7 +2,7 @@
 # Save this file in your project root and use with REST Client extension
 
 ### Base URL
-@baseUrl = http://localhost:3000/api
+@baseUrl = https://cg3solarsroductstading.vercel.app/
 @adminToken = {{loginAdmin.response.body.token}}
 @userToken = {{loginUser.response.body.token}}
 
